@@ -1801,7 +1801,8 @@
         const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
-          if (data && data.responseData && data.responseData.translatedText) {
+          // MyMemory reports quota and length errors with HTTP 200 and a warning text
+          if (data && Number(data.responseStatus) === 200 && data.responseData && data.responseData.translatedText) {
             let resText = data.responseData.translatedText;
             // Decode HTML entities without running any markup
             const doc = new DOMParser().parseFromString(resText, 'text/html');
