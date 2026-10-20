@@ -1091,6 +1091,13 @@
       updateJsonPreview();
     }
 
+    const ITEM_LABELS = ['object', 'text', 'background'];
+
+    function labelOptions(current) {
+      const labels = ITEM_LABELS.includes(current) ? ITEM_LABELS : [...ITEM_LABELS, current];
+      return labels.map(l => `<option value="${escapeHtml(l)}" ${l === current ? 'selected' : ''}>${escapeHtml(l)}</option>`).join('');
+    }
+
     function renderItems() {
       itemsListContainer.innerHTML = '';
       const items = appState.layout_json?.items || [];
@@ -1137,9 +1144,7 @@
             <div class="form-group">
               <label>Label</label>
               <select class="item-label-select">
-                <option value="object" ${item.label === 'object' ? 'selected' : ''}>object</option>
-                <option value="text" ${item.label === 'text' ? 'selected' : ''}>text</option>
-                <option value="background" ${item.label === 'background' ? 'selected' : ''}>background</option>
+                ${labelOptions(item.label)}
               </select>
             </div>
             <div class="form-group">
