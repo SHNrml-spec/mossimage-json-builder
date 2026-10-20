@@ -1773,28 +1773,42 @@
       return rows.map(r => r.map(c => c.trim())).filter(r => r.some(c => c));
     }
 
+    const tagKey = t => JSON.stringify([t.category, t.ja, t.en]);
+
     function parseAndLoadCsv(csvText) {
       const rows = parseCsv(csvText);
       if (rows.length === 0) return;
 
       const newTags = [];
+      const knownKeys = new Set(getAllTags().map(tagKey));
+      let validRows = 0;
       rows.forEach((cols, idx) => {
         // Ignore typical headers
         const head = cols.join(',').toLowerCase();
         if (idx === 0 && (head.includes('category') || head.includes('english'))) {
           return;
         }
+        let tag = null;
         if (cols.length >= 3) {
-          newTags.push({ category: cols[0] || 'カスタム', ja: cols[1], en: cols[2] });
+          tag = { category: cols[0] || 'カスタム', ja: cols[1], en: cols[2] };
         } else if (cols.length === 2) {
           // guess ja, en
-          newTags.push({ category: '一般', ja: cols[0], en: cols[1] });
+          tag = { category: '一般', ja: cols[0], en: cols[1] };
         } else if (cols.length === 1 && cols[0]) {
-          newTags.push({ category: '一般', ja: cols[0], en: cols[0] });
+          tag = { category: '一般', ja: cols[0], en: cols[0] };
+        }
+        if (!tag) return;
+        validRows++;
+        const key = tagKey(tag);
+        if (!knownKeys.has(key)) {
+          knownKeys.add(key);
+          newTags.push(tag);
         }
       });
 
-      if (newTags.length > 0) {
+      if (newTags.length === 0 && validRows > 0) {
+        showToast('すべて登録済みのタグでした');
+      } else if (newTags.length > 0) {
         customTags = [...customTags, ...newTags];
         try {
           localStorage.setItem('mossimage_custom_tags', JSON.stringify(customTags));
