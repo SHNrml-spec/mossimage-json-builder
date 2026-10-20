@@ -406,6 +406,7 @@
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.6);
       background-color: #1e293b;
       cursor: crosshair;
+      touch-action: none;
       border: 1px solid #475569;
     }
 
@@ -1551,7 +1552,8 @@
 
     /* Canvas Mouse Interactions */
     function setupCanvas() {
-      mossCanvas.addEventListener('mousedown', (e) => {
+      mossCanvas.addEventListener('pointerdown', (e) => {
+        if (!e.isPrimary) return;
         const pos = getCanvasMousePos(e);
         dragStartPos = pos;
 
@@ -1594,7 +1596,7 @@
         }
       });
 
-      window.addEventListener('mousemove', (e) => {
+      window.addEventListener('pointermove', (e) => {
         if (!dragMode) return;
         const pos = getCanvasMousePos(e);
         const items = appState.layout_json?.items || [];
@@ -1662,13 +1664,15 @@
         updateJsonPreview();
       });
 
-      window.addEventListener('mouseup', () => {
+      window.addEventListener('pointerup', endDrag);
+      window.addEventListener('pointercancel', endDrag);
+      function endDrag() {
         if (dragMode) {
           dragMode = null;
           initialBbox = null;
           renderItems();
         }
-      });
+      }
 
       window.addEventListener('resize', () => {
         resizeCanvasToFit();
