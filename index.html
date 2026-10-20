@@ -1040,8 +1040,6 @@
 
     function syncStateFromInputs() {
       appState.task_name = taskNameInput.value.trim();
-      appState.width = parseInt(imgWidthInput.value, 10) || 1024;
-      appState.height = parseInt(imgHeightInput.value, 10) || 576;
       appState.steps = Math.round(parseNumberOr(stepsInput.value, appState.steps));
       appState.cfg = parseNumberOr(cfgInput.value, appState.cfg);
       appState.seed = Math.trunc(parseNumberOr(seedInput.value, appState.seed));
@@ -1067,6 +1065,21 @@
     function parseNumberOr(value, fallback) {
       const n = parseFloat(value);
       return Number.isFinite(n) ? n : fallback;
+    }
+
+    function snapSize(value) {
+      const min = Number(imgWidthInput.min);
+      return Math.max(min, Math.round(value / 16) * 16);
+    }
+
+    function commitSizeInputs() {
+      appState.width = snapSize(parseNumberOr(imgWidthInput.value, appState.width));
+      appState.height = snapSize(parseNumberOr(imgHeightInput.value, appState.height));
+      imgWidthInput.value = appState.width;
+      imgHeightInput.value = appState.height;
+      resizeCanvasToFit();
+      drawCanvas();
+      updateJsonPreview();
     }
 
     function commitGenerationInputs() {
@@ -1813,20 +1826,14 @@
        ========================================================================== */
     function bindEvents() {
       // Inputs event delegation
-      [taskNameInput, imgWidthInput, imgHeightInput, stepsInput, cfgInput, seedInput, summaryMetaInput, summaryCanvasInput, summaryCaptionInput].forEach(elem => {
+      [taskNameInput, stepsInput, cfgInput, seedInput, summaryMetaInput, summaryCanvasInput, summaryCaptionInput].forEach(elem => {
         elem.addEventListener('input', syncStateFromInputs);
       });
       [stepsInput, cfgInput, seedInput].forEach(elem => {
         elem.addEventListener('change', commitGenerationInputs);
       });
-
-      imgWidthInput.addEventListener('change', () => {
-        resizeCanvasToFit();
-        drawCanvas();
-      });
-      imgHeightInput.addEventListener('change', () => {
-        resizeCanvasToFit();
-        drawCanvas();
+      [imgWidthInput, imgHeightInput].forEach(elem => {
+        elem.addEventListener('change', commitSizeInputs);
       });
 
       // Resolution Preset Chips
@@ -1834,13 +1841,9 @@
         chip.addEventListener('click', (e) => {
           document.querySelectorAll('#resPresets .chip').forEach(c => c.classList.remove('active'));
           chip.classList.add('active');
-          const w = parseInt(chip.dataset.w, 10);
-          const h = parseInt(chip.dataset.h, 10);
-          imgWidthInput.value = w;
-          imgHeightInput.value = h;
-          syncStateFromInputs();
-          resizeCanvasToFit();
-          drawCanvas();
+          imgWidthInput.value = chip.dataset.w;
+          imgHeightInput.value = chip.dataset.h;
+          commitSizeInputs();
         });
       });
 
@@ -2079,8 +2082,8 @@
       if (!json || typeof json !== 'object') return;
       appState = {
         task_name: json.task_name || "moss_task",
-        width: json.width || 1024,
-        height: json.height || 576,
+        width: snapSize(json.width || 1024),
+        height: snapSize(json.height || 576),
         steps: json.steps !== undefined ? json.steps : 30,
         cfg: json.cfg !== undefined ? json.cfg : 3.0,
         seed: json.seed !== undefined ? json.seed : -1,
