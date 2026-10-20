@@ -1308,7 +1308,7 @@
               label: it.label,
               caption: it.caption
             };
-            if (it.label === 'text' || it.text !== undefined) {
+            if (it.label === 'text') {
               out.text = it.text || "";
             }
             if (it.bbox && Array.isArray(it.bbox)) {
