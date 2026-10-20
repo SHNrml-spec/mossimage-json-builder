@@ -1040,11 +1040,9 @@
 
     function syncStateFromInputs() {
       appState.task_name = taskNameInput.value.trim();
-      appState.width = parseInt(imgWidthInput.value, 10) || 1024;
-      appState.height = parseInt(imgHeightInput.value, 10) || 576;
-      appState.steps = parseInt(stepsInput.value, 10) || 30;
-      appState.cfg = parseFloat(cfgInput.value) || 3.0;
-      appState.seed = parseInt(seedInput.value, 10) || -1;
+      appState.steps = Math.round(parseNumberOr(stepsInput.value, appState.steps));
+      appState.cfg = parseNumberOr(cfgInput.value, appState.cfg);
+      appState.seed = Math.trunc(parseNumberOr(seedInput.value, appState.seed));
 
       if (!appState.layout_json) appState.layout_json = {};
       if (!appState.layout_json.summary) appState.layout_json.summary = {};
@@ -1062,6 +1060,42 @@
 
       updateJsonPreview();
       drawCanvas();
+    }
+
+    function parseNumberOr(value, fallback) {
+      const n = parseFloat(value);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function snapSize(value) {
+      const min = Number(imgWidthInput.min);
+      return Math.max(min, Math.round(value / 16) * 16);
+    }
+
+    function commitSizeInputs() {
+      appState.width = snapSize(parseNumberOr(imgWidthInput.value, appState.width));
+      appState.height = snapSize(parseNumberOr(imgHeightInput.value, appState.height));
+      imgWidthInput.value = appState.width;
+      imgHeightInput.value = appState.height;
+      resizeCanvasToFit();
+      drawCanvas();
+      updateJsonPreview();
+    }
+
+    function commitGenerationInputs() {
+      appState.steps = Math.max(Number(stepsInput.min), appState.steps);
+      appState.cfg = Math.max(Number(cfgInput.min), appState.cfg);
+      stepsInput.value = appState.steps;
+      cfgInput.value = appState.cfg;
+      seedInput.value = appState.seed;
+      updateJsonPreview();
+    }
+
+    const ITEM_LABELS = ['object', 'text', 'background'];
+
+    function labelOptions(current) {
+      const labels = ITEM_LABELS.includes(current) ? ITEM_LABELS : [...ITEM_LABELS, current];
+      return labels.map(l => `<option value="${escapeHtml(l)}" ${l === current ? 'selected' : ''}>${escapeHtml(l)}</option>`).join('');
     }
 
     function renderItems() {
@@ -1110,9 +1144,7 @@
             <div class="form-group">
               <label>Label</label>
               <select class="item-label-select">
-                <option value="object" ${item.label === 'object' ? 'selected' : ''}>object</option>
-                <option value="text" ${item.label === 'text' ? 'selected' : ''}>text</option>
-                <option value="background" ${item.label === 'background' ? 'selected' : ''}>background</option>
+                ${labelOptions(item.label)}
               </select>
             </div>
             <div class="form-group">
@@ -1294,7 +1326,7 @@
               label: it.label,
               caption: it.caption
             };
-            if (it.label === 'text' || it.text !== undefined) {
+            if (it.label === 'text') {
               out.text = it.text || "";
             }
             if (it.bbox && Array.isArray(it.bbox)) {
@@ -1799,17 +1831,14 @@
        ========================================================================== */
     function bindEvents() {
       // Inputs event delegation
-      [taskNameInput, imgWidthInput, imgHeightInput, stepsInput, cfgInput, seedInput, summaryMetaInput, summaryCanvasInput, summaryCaptionInput].forEach(elem => {
+      [taskNameInput, stepsInput, cfgInput, seedInput, summaryMetaInput, summaryCanvasInput, summaryCaptionInput].forEach(elem => {
         elem.addEventListener('input', syncStateFromInputs);
       });
-
-      imgWidthInput.addEventListener('change', () => {
-        resizeCanvasToFit();
-        drawCanvas();
+      [stepsInput, cfgInput, seedInput].forEach(elem => {
+        elem.addEventListener('change', commitGenerationInputs);
       });
-      imgHeightInput.addEventListener('change', () => {
-        resizeCanvasToFit();
-        drawCanvas();
+      [imgWidthInput, imgHeightInput].forEach(elem => {
+        elem.addEventListener('change', commitSizeInputs);
       });
 
       // Resolution Preset Chips
@@ -1817,13 +1846,9 @@
         chip.addEventListener('click', (e) => {
           document.querySelectorAll('#resPresets .chip').forEach(c => c.classList.remove('active'));
           chip.classList.add('active');
-          const w = parseInt(chip.dataset.w, 10);
-          const h = parseInt(chip.dataset.h, 10);
-          imgWidthInput.value = w;
-          imgHeightInput.value = h;
-          syncStateFromInputs();
-          resizeCanvasToFit();
-          drawCanvas();
+          imgWidthInput.value = chip.dataset.w;
+          imgHeightInput.value = chip.dataset.h;
+          commitSizeInputs();
         });
       });
 
@@ -2062,8 +2087,8 @@
       if (!json || typeof json !== 'object') return;
       appState = {
         task_name: json.task_name || "moss_task",
-        width: json.width || 1024,
-        height: json.height || 576,
+        width: snapSize(json.width || 1024),
+        height: snapSize(json.height || 576),
         steps: json.steps !== undefined ? json.steps : 30,
         cfg: json.cfg !== undefined ? json.cfg : 3.0,
         seed: json.seed !== undefined ? json.seed : -1,
