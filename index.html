@@ -994,7 +994,13 @@
     /* ==========================================================================
        Initialization
        ========================================================================== */
+    const TASK_STORAGE_KEY = 'mossimage_task_json';
+
     function init() {
+      try {
+        const saved = localStorage.getItem(TASK_STORAGE_KEY);
+        if (saved) appState = parseTaskJson(JSON.parse(saved));
+      } catch(e) {}
       bindEvents();
       renderFormFromState();
       renderTags();
@@ -1361,6 +1367,9 @@
 
       const formatted = JSON.stringify(cleanJson, null, 2);
       jsonOutputArea.textContent = formatted;
+      try {
+        localStorage.setItem(TASK_STORAGE_KEY, formatted);
+      } catch(e) {}
     }
 
     /* ==========================================================================
