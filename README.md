@@ -1,15 +1,24 @@
 # MOSSImage JSON Builder & Layout Studio
 
+[![Live Demo](https://img.shields.io/badge/demo-online-brightgreen.svg)](https://shnrml-spec.github.io/mossimage-json-builder/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+🚀 **Live Web App (インストール不要で試せます)**:  
+👉 **https://shnrml-spec.github.io/mossimage-json-builder/**
+
 [English](#english) | [日本語](#japanese)
 
 ---
 
 <a name="english"></a>
 ## English
-
 An interactive, visual web tool to design and export task configuration JSON (`TASK_JSON`) for **MOSS-Image** (an open-weights text-to-image model by OpenMOSS featuring native layout control).
 
 This tool is packaged as a lightweight, single-file HTML application (`index.html`) with **zero external dependencies** — just double-click or open it directly in any modern browser!
+
+### 🌐 Live Demo
+You can try the web application directly in your browser without installing anything:  
+👉 **[Open MOSSImage JSON Builder](https://shnrml-spec.github.io/mossimage-json-builder/)**
 
 ### ✨ Key Features
 - **Visual Bounding Box Canvas**: Full support for MOSS-Image coordinate specifications (`bbox_coord_space: "abs_centralized"`, `bbox_format: "yxyx"`). Drag-and-drop to create, move, and resize layout boxes.
@@ -20,12 +29,16 @@ This tool is packaged as a lightweight, single-file HTML application (`index.htm
 ### 🚀 Quick Start
 1. Clone or download this repository.
 2. Open `index.html` in your browser (Chrome, Edge, Firefox, Safari).
-3. *(Optional)* Host it for free using **GitHub Pages** (Settings -> Pages -> Branch: `main` / `root`).
-
 ---
 
 <a name="japanese"></a>
 ## 日本語
+※Gemini3.8fでMOSS-ImageのjSON管理するツールを作成させたらできました。
+以下、詳細
+
+### 🌐 Webデモ（インストール不要）
+ブラウザから直接ツールを体験できます：  
+👉 **[MOSSImage JSON Builder を開く](https://shnrml-spec.github.io/mossimage-json-builder/)**
 
 オープンソース画像生成AI **MOSS-Image**（レイアウト制御・テキスト描画対応）のタスク設定JSON（`TASK_JSON`）を、直感的なキャンバス操作で作成・編集できるWebツールです。
 
@@ -49,7 +62,6 @@ This tool is packaged as a lightweight, single-file HTML application (`index.htm
 ### 🚀 使い方
 1. 本リポジトリをダウンロード（またはクローン）します。
 2. `index.html` をブラウザでダブルクリックして開きます。
-3. リポジトリの **GitHub Pages** を有効化（`Settings` > `Pages` で `main` ブランチを指定）すれば、URLを共有して誰でもブラウザ上で直接ツールを利用できます。
 
 ---
 
