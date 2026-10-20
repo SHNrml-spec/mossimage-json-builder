@@ -1833,7 +1833,7 @@
       tags.forEach(t => {
         csvContent += `"${t.category}","${t.ja}","${t.en}"\n`;
       });
-      downloadFile(csvContent, 'mossimage_tags.csv', 'text/csv;charset=utf-8;');
+      downloadFile('﻿' + csvContent, 'mossimage_tags.csv', 'text/csv;charset=utf-8;');
     }
 
     /* ==========================================================================
