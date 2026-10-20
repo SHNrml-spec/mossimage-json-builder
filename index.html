@@ -1078,6 +1078,10 @@
       appState.height = snapSize(parseNumberOr(imgHeightInput.value, appState.height));
       imgWidthInput.value = appState.width;
       imgHeightInput.value = appState.height;
+      appState.layout_json.items.forEach(it => {
+        if (it.bbox) it.bbox = fitBbox(it.bbox);
+      });
+      renderItems();
       resizeCanvasToFit();
       drawCanvas();
       updateJsonPreview();
