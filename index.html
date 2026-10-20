@@ -1212,9 +1212,14 @@
             if (!text.trim()) return;
             transBtn.innerHTML = '<span class="spinner"></span>';
             const translated = await translateText(text);
+            transBtn.innerHTML = '🌐 日→英';
+            if (item.caption !== text || !appState.layout_json.items.includes(item)) {
+              showToast('翻訳中に内容が変わったため反映しませんでした');
+              return;
+            }
             item.caption = translated;
             captionInput.value = translated;
-            transBtn.innerHTML = '🌐 日→英';
+            if (!captionInput.isConnected) renderItems();
             updateJsonPreview();
             showToast('英訳を反映しました');
           });
@@ -1866,8 +1871,12 @@
         if (!text.trim()) return;
         btn.innerHTML = '<span class="spinner"></span>';
         const translated = await translateText(text);
-        summaryCaptionInput.value = translated;
         btn.innerHTML = '🌐 日→英';
+        if (summaryCaptionInput.value !== text) {
+          showToast('翻訳中に内容が変わったため反映しませんでした');
+          return;
+        }
+        summaryCaptionInput.value = translated;
         syncStateFromInputs();
         showToast('全体Captionを英訳しました');
       });
