@@ -1743,10 +1743,17 @@
     function handleCsvFile(file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const content = e.target.result;
+        const bytes = e.target.result;
+        let content;
+        try {
+          content = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+        } catch (err) {
+          // Japanese Excel saves CSV as Shift_JIS by default
+          content = new TextDecoder('shift_jis').decode(bytes);
+        }
         parseAndLoadCsv(content);
       };
-      reader.readAsText(file, 'utf-8');
+      reader.readAsArrayBuffer(file);
     }
 
     function parseCsv(text) {
