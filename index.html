@@ -1829,9 +1829,10 @@
 
     function exportCsv() {
       const tags = getAllTags();
+      const quote = v => `"${String(v).replace(/"/g, '""')}"`;
       let csvContent = "category,japanese,english\n";
       tags.forEach(t => {
-        csvContent += `"${t.category}","${t.ja}","${t.en}"\n`;
+        csvContent += [t.category, t.ja, t.en].map(quote).join(',') + '\n';
       });
       downloadFile('﻿' + csvContent, 'mossimage_tags.csv', 'text/csv;charset=utf-8;');
     }
