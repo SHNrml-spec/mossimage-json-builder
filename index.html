@@ -1,0 +1,2117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOSSImage JSON Builder & Layout Studio</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --bg-card: #1e293b;
+      --bg-card-hover: #334155;
+      --bg-input: #0f172a;
+      --border-color: #334155;
+      --border-focus: #38bdf8;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --accent-green: #10b981;
+      --accent-purple: #a855f7;
+      --accent-red: #ef4444;
+      --accent-amber: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    header {
+      background-color: #1e293b;
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #0f172a;
+      font-size: 18px;
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-tag {
+      font-size: 11px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      background: var(--bg-card);
+      color: var(--text-main);
+    }
+
+    .btn:hover {
+      background: var(--bg-card-hover);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0f172a;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-success {
+      background: var(--accent-green);
+      color: #fff;
+    }
+
+    .btn-success:hover {
+      filter: brightness(1.1);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+
+    /* Layout */
+    .app-main {
+      display: grid;
+      grid-template-columns: 380px 1fr 380px;
+      flex: 1;
+      height: calc(100vh - 58px);
+      overflow: hidden;
+    }
+
+    @media (max-width: 1300px) {
+      .app-main {
+        grid-template-columns: 340px 1fr 340px;
+      }
+    }
+
+    @media (max-width: 1080px) {
+      .app-main {
+        grid-template-columns: 1fr;
+        height: auto;
+        overflow: visible;
+      }
+    }
+
+    .panel {
+      padding: 16px;
+      overflow-y: auto;
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel:last-child {
+      border-right: none;
+      border-left: 1px solid var(--border-color);
+    }
+
+    .panel-center {
+      background-color: #0b1120;
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: #e2e8f0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 8px;
+    }
+
+    /* Forms */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .form-row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 13px;
+      color: var(--text-main);
+      outline: none;
+      transition: border-color 0.15s;
+      font-family: inherit;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--border-focus);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 54px;
+      line-height: 1.4;
+    }
+
+    .input-with-btn {
+      display: flex;
+      gap: 6px;
+    }
+
+    .input-with-btn input,
+    .input-with-btn textarea {
+      flex: 1;
+    }
+
+    .btn-icon {
+      padding: 0 10px;
+      background: var(--bg-card-hover);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+    }
+
+    .btn-icon:hover {
+      background: var(--border-focus);
+      color: #0f172a;
+    }
+
+    /* Presets buttons */
+    .chips-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .chip:hover, .chip.active {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.1);
+    }
+
+    /* Items List */
+    .items-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .item-card {
+      background: #172033;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: border-color 0.15s;
+      position: relative;
+    }
+
+    .item-card.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .item-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .item-color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .item-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    /* Canvas Section */
+    .canvas-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-card);
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      font-size: 12px;
+    }
+
+    .canvas-viewport {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #030712;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+      min-height: 380px;
+    }
+
+    #mossCanvas {
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.6);
+      background-color: #1e293b;
+      cursor: crosshair;
+      border: 1px solid #475569;
+    }
+
+    .canvas-info {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(4px);
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      font-size: 11px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    /* Tabs in Right Panel */
+    .tabs-header {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      gap: 4px;
+    }
+
+    .tab-btn {
+      padding: 8px 12px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-content {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    /* Tag Dictionary */
+    .tag-categories {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .tag-category-btn {
+      padding: 4px 8px;
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 11px;
+      white-space: nowrap;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .tag-category-btn.active {
+      background: var(--accent);
+      color: #0f172a;
+      font-weight: 700;
+      border-color: var(--accent);
+    }
+
+    .tags-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      max-height: 380px;
+      overflow-y: auto;
+      padding: 4px 2px;
+    }
+
+    .tag-pill {
+      background: #172033;
+      border: 1px solid #334155;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .tag-pill:hover {
+      background: #1e293b;
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .tag-pill .en-text {
+      color: #f1f5f9;
+      font-weight: 600;
+    }
+
+    .tag-pill .ja-text {
+      color: #94a3b8;
+      font-size: 10px;
+    }
+
+    /* JSON Output Area */
+    .json-code-box {
+      background: #090d16;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: #38bdf8;
+      overflow-x: auto;
+      white-space: pre;
+      line-height: 1.5;
+      flex: 1;
+      max-height: 480px;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #10b981;
+      color: #ffffff;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.25s ease;
+      z-index: 9999;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Custom File Input */
+    .file-drop-zone {
+      border: 1px dashed var(--border-color);
+      border-radius: 6px;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(15, 23, 42, 0.5);
+      transition: border-color 0.15s;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .file-drop-zone:hover {
+      border-color: var(--accent);
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">M</div>
+      <div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="brand-title">MOSSImage JSON Builder</span>
+          <span class="brand-tag">v1.0 Layout Studio</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-sm" id="btnLoadDefault" title="ユーザー提示の初期設定を読み込みます">
+        🔄 サンプル復元
+      </button>
+      <button class="btn btn-sm" id="btnImportJson">
+        📂 JSON読込
+      </button>
+      <button class="btn btn-sm" id="btnExportJson">
+        💾 JSON保存
+      </button>
+      <button class="btn btn-sm btn-primary" id="btnCopyJson">
+        📋 JSONコピー
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Work Area -->
+  <main class="app-main">
+    
+    <!-- Left Column: Config & Items -->
+    <div class="panel">
+      
+      <!-- Basic Task Config -->
+      <div class="card">
+        <div class="card-header">
+          <span>⚙️ 基本設定 (Task Settings)</span>
+        </div>
+        <div class="form-group">
+          <label>Task Name (タスク識別名)</label>
+          <input type="text" id="taskName" value="mossimage_demo">
+        </div>
+        
+        <div class="form-group">
+          <label>解像度プリセット</label>
+          <div class="chips-group" id="resPresets">
+            <span class="chip active" data-w="1024" data-h="576">1024×576 (16:9)</span>
+            <span class="chip" data-w="1024" data-h="1024">1024×1024 (1:1)</span>
+            <span class="chip" data-w="576" data-h="1024">576×1024 (9:16)</span>
+            <span class="chip" data-w="768" data-h="1024">768×1024 (3:4)</span>
+            <span class="chip" data-w="1024" data-h="768">1024×768 (4:3)</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Width (幅)</label>
+            <input type="number" id="imgWidth" value="1024" step="16" min="256">
+          </div>
+          <div class="form-group">
+            <label>Height (高さ)</label>
+            <input type="number" id="imgHeight" value="576" step="16" min="256">
+          </div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label>Steps</label>
+            <input type="number" id="stepsVal" value="30" min="1" max="100">
+          </div>
+          <div class="form-group">
+            <label>CFG Scale</label>
+            <input type="number" id="cfgVal" value="3.0" step="0.1" min="1">
+          </div>
+          <div class="form-group">
+            <label>
+              Seed
+              <a href="#" id="btnRandomSeed" style="color:var(--accent); text-decoration:none; font-size:10px;">🎲乱数</a>
+            </label>
+            <input type="number" id="seedVal" value="-1">
+          </div>
+        </div>
+      </div>
+
+      <!-- Layout Summary Config -->
+      <div class="card">
+        <div class="card-header">
+          <span>🎨 全体設定 (Layout Summary)</span>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Meta Tags (カンマ区切り)</label>
+            <input type="text" id="summaryMeta" value="Cute" placeholder="例: Cute, 4k, masterpiece">
+          </div>
+          <div class="form-group">
+            <label>Canvas Type</label>
+            <input type="text" id="summaryCanvas" value="single">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>
+            全体 Caption (全体プロンプト・画質等)
+            <button class="btn btn-sm btn-icon" id="btnTranslateSummary" title="日本語を英語に翻訳">🌐 日→英</button>
+          </label>
+          <textarea id="summaryCaption" placeholder="steps, anime colors, 4k display ...">steps, anime colors,4k display</textarea>
+        </div>
+      </div>
+
+      <!-- Items Section -->
+      <div class="card" style="flex:1;">
+        <div class="card-header">
+          <span>📦 配置アイテム (Items)</span>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-sm btn-primary" id="btnAddObjectItem">+ オブジェクト</button>
+            <button class="btn btn-sm" id="btnAddTextItem">+ テキスト</button>
+          </div>
+        </div>
+        
+        <div class="items-container" id="itemsList">
+          <!-- Item Cards will be rendered here -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Center Column: Visual Layout Canvas -->
+    <div class="panel-center">
+      <div class="canvas-toolbar">
+        <div style="display:flex; gap:8px; align-items:center;">
+          <strong>🎯 ビジュアルレイアウト配置</strong>
+          <span style="color:var(--text-muted); font-size:11px;">(中央原点: abs_centralized [ymin, xmin, ymax, xmax])</span>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-sm" id="btnResetBoxes" title="すべての矩形枠をリセット">リセット</button>
+          <button class="btn btn-sm" id="btnFitCanvas" title="表示倍率をリセット">表示調整</button>
+        </div>
+      </div>
+
+      <div class="canvas-viewport" id="canvasViewport">
+        <canvas id="mossCanvas"></canvas>
+        <div class="canvas-info" id="canvasInfo">
+          キャンバス上でドラッグすると選択中アイテムの矩形 (BBox) を作成・変更できます
+        </div>
+      </div>
+
+      <!-- Quick helper bar -->
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-muted); padding:4px 8px;">
+        <span>💡 矩形をクリックすると選択、ドラッグで移動、角をドラッグしてサイズ変更が可能です</span>
+        <span id="selectedItemStatus">未選択</span>
+      </div>
+    </div>
+
+    <!-- Right Column: Tag Dictionary & Translator & JSON Output -->
+    <div class="panel">
+      
+      <!-- Tabs -->
+      <div class="tabs-header">
+        <button class="tab-btn active" data-tab="tabTags">🏷️ タグ辞書 (CSV)</button>
+        <button class="tab-btn" data-tab="tabTranslate">🌐 翻訳</button>
+        <button class="tab-btn" data-tab="tabJson">📄 JSON</button>
+      </div>
+
+      <!-- Tab 1: Tags & CSV -->
+      <div class="tab-content active" id="tabTags">
+        <div class="form-group">
+          <input type="text" id="tagSearchInput" placeholder="🔍 タグを検索 (日本語または英語)...">
+        </div>
+
+        <div class="tag-categories" id="tagCategoryList">
+          <button class="tag-category-btn active" data-cat="all">すべて</button>
+          <button class="tag-category-btn" data-cat="品質">品質</button>
+          <button class="tag-category-btn" data-cat="人物">人物</button>
+          <button class="tag-category-btn" data-cat="衣装">衣装</button>
+          <button class="tag-category-btn" data-cat="構図">構図</button>
+          <button class="tag-category-btn" data-cat="ポーズ">ポーズ</button>
+          <button class="tag-category-btn" data-cat="背景">背景</button>
+          <button class="tag-category-btn" data-cat="効果">効果</button>
+          <button class="tag-category-btn" data-cat="テキスト">テキスト</button>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--text-muted);">
+          <span>クリックで現在フォーカス中のプロンプトに挿入</span>
+          <span id="tagCountDisplay">0 件</span>
+        </div>
+
+        <div class="tags-grid" id="tagsGridContainer">
+          <!-- Tag Pills will be injected here -->
+        </div>
+
+        <div class="card" style="margin-top:auto;">
+          <div class="card-header">
+            <span>📥 CSVタグ辞書のインポート</span>
+          </div>
+          <div class="file-drop-zone" id="csvDropZone">
+            ここにCSVファイルをドラッグ＆ドロップ<br>またはクリックして選択
+            <input type="file" id="csvFileInput" accept=".csv" style="display:none;">
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <button class="btn btn-sm" id="btnExportCsv">📤 CSVエクスポート</button>
+            <button class="btn btn-sm btn-danger" id="btnResetTags">初期辞書に戻す</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Translation Assistant -->
+      <div class="tab-content" id="tabTranslate">
+        <div class="card">
+          <div class="card-header">
+            <span>日本語 → 英語 リアルタイム翻訳</span>
+          </div>
+          <div class="form-group">
+            <label>日本語プロンプト・キーワード</label>
+            <textarea id="transInputJa" rows="4" placeholder="例: 神秘的な教会の中に立つ美しいシスター、光が差し込んでいる"></textarea>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-primary" id="btnExecuteTranslate" style="flex:1;">
+              🌐 英語に翻訳する
+            </button>
+            <button class="btn" id="btnClearTrans">クリア</button>
+          </div>
+          <div class="form-group" style="margin-top:8px;">
+            <label>翻訳結果 (英語)</label>
+            <textarea id="transOutputEn" rows="4" placeholder="翻訳結果がここに表示されます..."></textarea>
+          </div>
+          <div style="display:flex; gap:6px; flex-direction:column;">
+            <button class="btn btn-sm" id="btnApplyTransToSummary">全体 Caption に追加</button>
+            <button class="btn btn-sm" id="btnApplyTransToSelectedItem">選択中アイテムの Caption に追加</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span>💡 翻訳ヒント</span>
+          </div>
+          <p style="font-size:12px; color:var(--text-muted); line-height:1.5;">
+            ・入力欄の右にある「🌐 日→英」ボタンを押すだけでも、その欄の日本語を即座に英語化できます。<br>
+            ・無料の翻訳API (MyMemory) を利用しています。オフライン時は内蔵タグ辞書でキーワード置換されます。
+          </p>
+        </div>
+      </div>
+
+      <!-- Tab 3: JSON Output & Import -->
+      <div class="tab-content" id="tabJson">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:12px; font-weight:700;">生成された TASK_JSON</span>
+          <button class="btn btn-sm btn-primary" id="btnCopyJsonTab">📋 コピー</button>
+        </div>
+        <pre class="json-code-box" id="jsonOutputArea"></pre>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Toast Notification element -->
+  <div class="toast" id="toastNotice">コピーしました！</div>
+
+  <!-- Hidden File Input for JSON import -->
+  <input type="file" id="jsonFileInput" accept=".json" style="display:none;">
+
+  <script>
+    /* ==========================================================================
+       Initial State & Clean Demo Example (GitHub Ready)
+       ========================================================================== */
+    const DEFAULT_TASK_JSON = {
+      task_name: "mossimage_demo",
+      width: 1024,
+      height: 576,
+      steps: 30,
+      cfg: 3.0,
+      seed: -1,
+      layout_json: {
+        summary: {
+          meta: ["Cute", "masterpiece"],
+          canvas: "single",
+          caption: "steps, anime colors, 4k display"
+        },
+        items: [
+          {
+            label: "object",
+            caption: "a cute anime nun girl, praying, blue eyes",
+            bbox: [-200, -350, 200, 350],
+            color: "#38bdf8"
+          },
+          {
+            label: "text",
+            caption: "TITLE",
+            text: "MOSSImage",
+            bbox: [160, -250, 260, 250],
+            color: "#f43f5e"
+          }
+        ],
+        bbox_coord_space: "abs_centralized",
+        bbox_format: "yxyx"
+      }
+    };
+
+    let appState = JSON.parse(JSON.stringify(DEFAULT_TASK_JSON));
+    let selectedItemIndex = 0;
+    let lastFocusedInput = null;
+
+    /* Preset Tag Dictionary (Embedded Default) */
+    const DEFAULT_TAGS = [
+      { category: "品質", ja: "最高傑作", en: "masterpiece" },
+      { category: "品質", ja: "最高画質", en: "best quality" },
+      { category: "品質", ja: "超高精細", en: "highly detailed" },
+      { category: "品質", ja: "4K表示", en: "4k display" },
+      { category: "品質", ja: "アニメ調色彩", en: "anime colors" },
+      { category: "品質", ja: "シャープな焦点", en: "sharp focus" },
+      { category: "品質", ja: "シネマティック照明", en: "cinematic lighting" },
+      { category: "人物", ja: "少女1人", en: "1girl" },
+      { category: "人物", ja: "少年1人", en: "1boy" },
+      { category: "人物", ja: "修道女/シスター", en: "nun girl" },
+      { category: "人物", ja: "可愛い", en: "cute" },
+      { category: "人物", ja: "美しい", en: "beautiful" },
+      { category: "人物", ja: "笑顔", en: "smile" },
+      { category: "人物", ja: "照れ顔", en: "blushing" },
+      { category: "人物", ja: "カメラ目線", en: "looking at viewer" },
+      { category: "人物", ja: "青い目", en: "blue eyes" },
+      { category: "人物", ja: "赤い目", en: "red eyes" },
+      { category: "人物", ja: "金髪", en: "blonde hair" },
+      { category: "人物", ja: "銀髪", en: "silver hair" },
+      { category: "人物", ja: "黒髪", en: "black hair" },
+      { category: "人物", ja: "ツインテール", en: "twintails" },
+      { category: "人物", ja: "猫耳", en: "cat ears" },
+      { category: "衣装", ja: "修道服", en: "nun habit" },
+      { category: "衣装", ja: "制服", en: "school uniform" },
+      { category: "衣装", ja: "ドレス", en: "dress" },
+      { category: "衣装", ja: "私服", en: "casual clothes" },
+      { category: "衣装", ja: "メイド服", en: "maid outfit" },
+      { category: "衣装", ja: "着物", en: "kimono" },
+      { category: "衣装", ja: "リボン", en: "ribbon" },
+      { category: "構図", ja: "全身", en: "full body" },
+      { category: "構図", ja: "上半身", en: "upper body" },
+      { category: "構図", ja: "クローズアップ", en: "close-up" },
+      { category: "構図", ja: "腰上", en: "cowboy shot" },
+      { category: "構図", ja: "中央配置", en: "centered" },
+      { category: "構図", ja: "ダイナミック構図", en: "dynamic angle" },
+      { category: "ポーズ", ja: "立ち姿", en: "standing" },
+      { category: "ポーズ", ja: "座る", en: "sitting" },
+      { category: "ポーズ", ja: "祈る", en: "praying" },
+      { category: "ポーズ", ja: "手を合わせる", en: "hands together" },
+      { category: "ポーズ", ja: "手を伸ばす", en: "reaching out" },
+      { category: "ポーズ", ja: "ピースサイン", en: "peace sign" },
+      { category: "背景", ja: "シンプルな背景", en: "simple background" },
+      { category: "背景", ja: "白背景", en: "white background" },
+      { category: "背景", ja: "教会", en: "church" },
+      { category: "背景", ja: "ステンドグラス", en: "stained glass" },
+      { category: "背景", ja: "青空", en: "blue sky" },
+      { category: "効果", ja: "光の粒子", en: "sparkles" },
+      { category: "効果", ja: "レンズフレア", en: "lens flare" },
+      { category: "効果", ja: "被写界深度/ボケ", en: "depth of field" },
+      { category: "効果", ja: "柔らかな光", en: "soft lighting" },
+      { category: "テキスト", ja: "タイトル", en: "title" },
+      { category: "テキスト", ja: "ロゴ", en: "logo" },
+      { category: "テキスト", ja: "タイポグラフィ", en: "typography" },
+      { category: "テキスト", ja: "太字", en: "bold font" }
+    ];
+
+    let customTags = [];
+    try {
+      const saved = localStorage.getItem('mossimage_custom_tags');
+      if (saved) customTags = JSON.parse(saved);
+    } catch(e) {}
+
+    function getAllTags() {
+      return [...DEFAULT_TAGS, ...customTags];
+    }
+
+    /* Colors for Canvas items */
+    const ITEM_COLORS = ["#38bdf8", "#f43f5e", "#10b981", "#a855f7", "#f59e0b", "#ec4899", "#06b6d4"];
+
+    /* ==========================================================================
+       DOM Elements
+       ========================================================================== */
+    const taskNameInput = document.getElementById('taskName');
+    const imgWidthInput = document.getElementById('imgWidth');
+    const imgHeightInput = document.getElementById('imgHeight');
+    const stepsInput = document.getElementById('stepsVal');
+    const cfgInput = document.getElementById('cfgVal');
+    const seedInput = document.getElementById('seedVal');
+    const summaryMetaInput = document.getElementById('summaryMeta');
+    const summaryCanvasInput = document.getElementById('summaryCanvas');
+    const summaryCaptionInput = document.getElementById('summaryCaption');
+    const itemsListContainer = document.getElementById('itemsList');
+    const jsonOutputArea = document.getElementById('jsonOutputArea');
+    const toastNotice = document.getElementById('toastNotice');
+
+    const mossCanvas = document.getElementById('mossCanvas');
+    const ctx = mossCanvas.getContext('2d');
+    const canvasViewport = document.getElementById('canvasViewport');
+    const selectedItemStatus = document.getElementById('selectedItemStatus');
+
+    /* ==========================================================================
+       Initialization
+       ========================================================================== */
+    function init() {
+      bindEvents();
+      renderFormFromState();
+      renderTags();
+      setupCanvas();
+      updateJsonPreview();
+    }
+
+    function showToast(message) {
+      toastNotice.textContent = message;
+      toastNotice.classList.add('show');
+      setTimeout(() => {
+        toastNotice.classList.remove('show');
+      }, 2000);
+    }
+
+    /* Track last active input for tag insertion */
+    document.addEventListener('focusin', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        lastFocusedInput = e.target;
+      }
+    });
+
+    /* ==========================================================================
+       State <-> UI Synchronization
+       ========================================================================== */
+    function renderFormFromState() {
+      taskNameInput.value = appState.task_name;
+      imgWidthInput.value = appState.width;
+      imgHeightInput.value = appState.height;
+      stepsInput.value = appState.steps;
+      cfgInput.value = appState.cfg;
+      seedInput.value = appState.seed;
+
+      const summary = appState.layout_json?.summary || {};
+      summaryMetaInput.value = (summary.meta || []).join(", ");
+      summaryCanvasInput.value = summary.canvas || "single";
+      summaryCaptionInput.value = summary.caption || "";
+
+      renderItems();
+      resizeCanvasToFit();
+      drawCanvas();
+      updateJsonPreview();
+    }
+
+    function syncStateFromInputs() {
+      appState.task_name = taskNameInput.value.trim();
+      appState.width = parseInt(imgWidthInput.value, 10) || 1024;
+      appState.height = parseInt(imgHeightInput.value, 10) || 576;
+      appState.steps = parseInt(stepsInput.value, 10) || 30;
+      appState.cfg = parseFloat(cfgInput.value) || 3.0;
+      appState.seed = parseInt(seedInput.value, 10) || -1;
+
+      if (!appState.layout_json) appState.layout_json = {};
+      if (!appState.layout_json.summary) appState.layout_json.summary = {};
+
+      const metaParts = summaryMetaInput.value
+        .split(",")
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+      appState.layout_json.summary.meta = metaParts;
+      appState.layout_json.summary.canvas = summaryCanvasInput.value.trim() || "single";
+      appState.layout_json.summary.caption = summaryCaptionInput.value;
+
+      appState.layout_json.bbox_coord_space = "abs_centralized";
+      appState.layout_json.bbox_format = "yxyx";
+
+      updateJsonPreview();
+      drawCanvas();
+    }
+
+    function renderItems() {
+      itemsListContainer.innerHTML = '';
+      const items = appState.layout_json?.items || [];
+
+      if (items.length === 0) {
+        itemsListContainer.innerHTML = '<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:16px;">アイテムがありません。「+ オブジェクト」等で追加してください。</div>';
+        selectedItemIndex = -1;
+        updateSelectedStatus();
+        return;
+      }
+
+      if (selectedItemIndex >= items.length) {
+        selectedItemIndex = items.length - 1;
+      }
+
+      items.forEach((item, index) => {
+        if (!item.color) {
+          item.color = ITEM_COLORS[index % ITEM_COLORS.length];
+        }
+
+        const card = document.createElement('div');
+        card.className = `item-card ${index === selectedItemIndex ? 'active' : ''}`;
+        card.dataset.index = index;
+
+        const isText = item.label === 'text';
+        const bboxStr = item.bbox ? `[${item.bbox.join(', ')}]` : '未指定';
+
+        card.innerHTML = `
+          <div class="item-header">
+            <div class="item-badge">
+              <span class="item-color-dot" style="background-color: ${item.color};"></span>
+              <span>#${index + 1} ${escapeHtml(item.label || 'item')}</span>
+            </div>
+            <div class="item-actions">
+              <button class="btn btn-sm btn-icon" data-action="toggle-bbox" title="BBoxの有無切替">
+                ${item.bbox ? '🔲 Box有' : '⬜ Box無'}
+              </button>
+              <button class="btn btn-sm btn-icon" data-action="duplicate" title="複製">📄</button>
+              <button class="btn btn-sm btn-icon btn-danger" data-action="delete" title="削除">🗑️</button>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Label</label>
+              <select class="item-label-select">
+                <option value="object" ${item.label === 'object' ? 'selected' : ''}>object</option>
+                <option value="text" ${item.label === 'text' ? 'selected' : ''}>text</option>
+                <option value="background" ${item.label === 'background' ? 'selected' : ''}>background</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>BBox (yxyx)</label>
+              <input type="text" class="item-bbox-input" value="${item.bbox ? item.bbox.join(', ') : ''}" placeholder="ymin, xmin, ymax, xmax">
+            </div>
+          </div>
+
+          ${isText ? `
+          <div class="form-group">
+            <label>描画テキスト (text)</label>
+            <input type="text" class="item-text-input" value="${escapeHtml(item.text || '')}" placeholder="描画したい文字 (例: LOVE)">
+          </div>
+          ` : ''}
+
+          <div class="form-group">
+            <label>
+              アイテム Caption
+              <button class="btn btn-sm btn-icon btn-trans-item" title="このアイテムの日本語を翻訳">🌐 日→英</button>
+            </label>
+            <textarea class="item-caption-input" rows="2" placeholder="詳細プロンプト">${escapeHtml(item.caption || '')}</textarea>
+          </div>
+        `;
+
+        // Card Click Selection
+        card.addEventListener('click', (e) => {
+          if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT' && e.target.tagName !== 'TEXTAREA') {
+            selectItem(index);
+          }
+        });
+
+        // Label Change
+        const labelSelect = card.querySelector('.item-label-select');
+        labelSelect.addEventListener('change', (e) => {
+          item.label = e.target.value;
+          if (item.label === 'text' && !item.text) item.text = "SAMPLE";
+          renderItems();
+          updateJsonPreview();
+          drawCanvas();
+        });
+
+        // Text input Change
+        const textInput = card.querySelector('.item-text-input');
+        if (textInput) {
+          textInput.addEventListener('input', (e) => {
+            item.text = e.target.value;
+            updateJsonPreview();
+            drawCanvas();
+          });
+        }
+
+        // Caption Change
+        const captionInput = card.querySelector('.item-caption-input');
+        captionInput.addEventListener('input', (e) => {
+          item.caption = e.target.value;
+          updateJsonPreview();
+        });
+
+        // Translate Item Caption Button
+        const transBtn = card.querySelector('.btn-trans-item');
+        if (transBtn) {
+          transBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const text = item.caption;
+            if (!text.trim()) return;
+            transBtn.innerHTML = '<span class="spinner"></span>';
+            const translated = await translateText(text);
+            item.caption = translated;
+            captionInput.value = translated;
+            transBtn.innerHTML = '🌐 日→英';
+            updateJsonPreview();
+            showToast('英訳を反映しました');
+          });
+        }
+
+        // BBox manual input change
+        const bboxInput = card.querySelector('.item-bbox-input');
+        bboxInput.addEventListener('change', (e) => {
+          const val = e.target.value.trim();
+          if (!val) {
+            delete item.bbox;
+          } else {
+            const parts = val.split(',').map(n => parseInt(n.trim(), 10));
+            if (parts.length === 4 && parts.every(n => !isNaN(n))) {
+              item.bbox = parts;
+            } else {
+              alert('BBoxは "ymin, xmin, ymax, xmax" の形式で4つの数値を指定してください');
+              bboxInput.value = item.bbox ? item.bbox.join(', ') : '';
+            }
+          }
+          updateJsonPreview();
+          drawCanvas();
+        });
+
+        // Action Buttons
+        card.querySelector('[data-action="toggle-bbox"]').addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (item.bbox) {
+            delete item.bbox;
+          } else {
+            // Default center box
+            const w = appState.width;
+            const h = appState.height;
+            item.bbox = [Math.round(-h*0.25), Math.round(-w*0.25), Math.round(h*0.25), Math.round(w*0.25)];
+          }
+          renderItems();
+          updateJsonPreview();
+          drawCanvas();
+        });
+
+        card.querySelector('[data-action="duplicate"]').addEventListener('click', (e) => {
+          e.stopPropagation();
+          const newItem = JSON.parse(JSON.stringify(item));
+          if (newItem.bbox) {
+            // slightly offset
+            newItem.bbox = [newItem.bbox[0] + 20, newItem.bbox[1] + 20, newItem.bbox[2] + 20, newItem.bbox[3] + 20];
+          }
+          newItem.color = ITEM_COLORS[(index + 1) % ITEM_COLORS.length];
+          appState.layout_json.items.splice(index + 1, 0, newItem);
+          selectedItemIndex = index + 1;
+          renderItems();
+          updateJsonPreview();
+          drawCanvas();
+        });
+
+        card.querySelector('[data-action="delete"]').addEventListener('click', (e) => {
+          e.stopPropagation();
+          appState.layout_json.items.splice(index, 1);
+          if (selectedItemIndex >= appState.layout_json.items.length) {
+            selectedItemIndex = appState.layout_json.items.length - 1;
+          }
+          renderItems();
+          updateJsonPreview();
+          drawCanvas();
+        });
+
+        itemsListContainer.appendChild(card);
+      });
+
+      updateSelectedStatus();
+    }
+
+    function selectItem(index) {
+      selectedItemIndex = index;
+      document.querySelectorAll('.item-card').forEach((c, idx) => {
+        c.classList.toggle('active', idx === index);
+      });
+      updateSelectedStatus();
+      drawCanvas();
+    }
+
+    function updateSelectedStatus() {
+      const items = appState.layout_json?.items || [];
+      if (selectedItemIndex >= 0 && selectedItemIndex < items.length) {
+        const item = items[selectedItemIndex];
+        selectedItemStatus.textContent = `選択中: #${selectedItemIndex + 1} [${item.label}]`;
+      } else {
+        selectedItemStatus.textContent = 'アイテム未選択';
+      }
+    }
+
+    function updateJsonPreview() {
+      // Build clean JSON representation exactly as requested
+      const cleanJson = {
+        task_name: appState.task_name,
+        width: appState.width,
+        height: appState.height,
+        steps: appState.steps,
+        cfg: appState.cfg,
+        seed: appState.seed,
+        layout_json: {
+          summary: {
+            meta: appState.layout_json.summary.meta,
+            canvas: appState.layout_json.summary.canvas,
+            caption: appState.layout_json.summary.caption
+          },
+          items: appState.layout_json.items.map(it => {
+            const out = {
+              label: it.label,
+              caption: it.caption
+            };
+            if (it.label === 'text' || it.text !== undefined) {
+              out.text = it.text || "";
+            }
+            if (it.bbox && Array.isArray(it.bbox)) {
+              out.bbox = it.bbox;
+            }
+            return out;
+          }),
+          bbox_coord_space: appState.layout_json.bbox_coord_space || "abs_centralized",
+          bbox_format: appState.layout_json.bbox_format || "yxyx"
+        }
+      };
+
+      const formatted = JSON.stringify(cleanJson, null, 2);
+      jsonOutputArea.textContent = formatted;
+    }
+
+    /* ==========================================================================
+       Canvas & Coordinate Transform Logic (abs_centralized, yxyx)
+       ========================================================================== */
+    let canvasScale = 1.0;
+    let canvasOffset = { x: 0, y: 0 };
+    let isDrawingBox = false;
+    let dragMode = null; // 'create', 'move', 'resize-tl', 'resize-br', etc.
+    let dragStartPos = { x: 0, y: 0 };
+    let initialBbox = null;
+    let resizeHandleSize = 8;
+
+    function resizeCanvasToFit() {
+      const viewport = canvasViewport;
+      const vWidth = viewport.clientWidth - 40;
+      const vHeight = viewport.clientHeight - 40;
+
+      const imgW = appState.width;
+      const imgH = appState.height;
+
+      const scaleX = vWidth / imgW;
+      const scaleY = vHeight / imgH;
+      canvasScale = Math.min(scaleX, scaleY, 1.0); // max 1.0
+
+      mossCanvas.width = imgW;
+      mossCanvas.height = imgH;
+      mossCanvas.style.width = `${imgW * canvasScale}px`;
+      mossCanvas.style.height = `${imgH * canvasScale}px`;
+    }
+
+    // Convert Canvas Pixel (0 to W, 0 to H) -> abs_centralized (-W/2 to +W/2, -H/2 to +H/2)
+    function canvasToCentralized(x, y) {
+      return {
+        x: Math.round(x - appState.width / 2),
+        y: Math.round(y - appState.height / 2)
+      };
+    }
+
+    // Convert abs_centralized -> Canvas Pixel
+    function centralizedToCanvas(cx, cy) {
+      return {
+        x: cx + appState.width / 2,
+        y: cy + appState.height / 2
+      };
+    }
+
+    // Convert bbox [ymin, xmin, ymax, xmax] -> Canvas Rect { x, y, w, h }
+    function bboxToCanvasRect(bbox) {
+      const [ymin, xmin, ymax, xmax] = bbox;
+      const tl = centralizedToCanvas(xmin, ymin);
+      const br = centralizedToCanvas(xmax, ymax);
+      return {
+        x: Math.min(tl.x, br.x),
+        y: Math.min(tl.y, br.y),
+        w: Math.abs(br.x - tl.x),
+        h: Math.abs(br.y - tl.y)
+      };
+    }
+
+    // Convert Canvas Rect { x, y, w, h } -> bbox [ymin, xmin, ymax, xmax]
+    function canvasRectToBbox(rect) {
+      const tl = canvasToCentralized(rect.x, rect.y);
+      const br = canvasToCentralized(rect.x + rect.w, rect.y + rect.h);
+      return [
+        Math.min(tl.y, br.y),
+        Math.min(tl.x, br.x),
+        Math.max(tl.y, br.y),
+        Math.max(tl.x, br.x)
+      ];
+    }
+
+    function drawCanvas() {
+      const W = mossCanvas.width;
+      const H = mossCanvas.height;
+
+      ctx.clearRect(0, 0, W, H);
+
+      // Background Canvas fill
+      ctx.fillStyle = "#1e293b";
+      ctx.fillRect(0, 0, W, H);
+
+      // Draw Grid & Axes
+      ctx.lineWidth = 1;
+
+      // 50px subtle grid
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+      ctx.beginPath();
+      for (let x = 0; x <= W; x += 64) {
+        ctx.moveTo(x, 0); ctx.lineTo(x, H);
+      }
+      for (let y = 0; y <= H; y += 64) {
+        ctx.moveTo(0, y); ctx.lineTo(W, y);
+      }
+      ctx.stroke();
+
+      // Center Axes (0, 0 in centralized coords)
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.35)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      // Y axis (x = W/2)
+      ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H);
+      // X axis (y = H/2)
+      ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Center Origin Label (0,0)
+      ctx.fillStyle = "rgba(56, 189, 248, 0.7)";
+      ctx.font = "11px monospace";
+      ctx.fillText("(0, 0)", W / 2 + 5, H / 2 - 5);
+
+      // Draw Item Bounding Boxes
+      const items = appState.layout_json?.items || [];
+
+      items.forEach((item, index) => {
+        if (!item.bbox) return;
+
+        const isSelected = (index === selectedItemIndex);
+        const rect = bboxToCanvasRect(item.bbox);
+        const color = item.color || "#38bdf8";
+
+        // Fill
+        ctx.fillStyle = isSelected ? hexToRgba(color, 0.25) : hexToRgba(color, 0.12);
+        ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+
+        // Border
+        ctx.strokeStyle = color;
+        ctx.lineWidth = isSelected ? 3 : 1.5;
+        ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+
+        // Tag label badge on canvas
+        const tagText = `${item.label === 'text' ? `"${item.text || ''}"` : item.label} #${index + 1}`;
+        ctx.font = "bold 12px sans-serif";
+        const textWidth = ctx.measureText(tagText).width;
+
+        ctx.fillStyle = color;
+        ctx.fillRect(rect.x, Math.max(0, rect.y - 20), textWidth + 12, 20);
+
+        ctx.fillStyle = "#0f172a";
+        ctx.fillText(tagText, rect.x + 6, Math.max(14, rect.y - 5));
+
+        // Coordinate info under box
+        const coordText = `yxyx: [${item.bbox.join(', ')}]`;
+        ctx.font = "10px monospace";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+        ctx.fillText(coordText, rect.x, rect.y + rect.h + 12);
+
+        // Draw resize handles if selected
+        if (isSelected) {
+          drawHandles(rect, color);
+        }
+      });
+    }
+
+    function drawHandles(rect, color) {
+      const handles = getHandles(rect);
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+
+      for (const key in handles) {
+        const h = handles[key];
+        ctx.fillRect(h.x, h.y, h.w, h.h);
+        ctx.strokeRect(h.x, h.y, h.w, h.h);
+      }
+    }
+
+    function getHandles(rect) {
+      const s = resizeHandleSize;
+      return {
+        'tl': { x: rect.x - s/2, y: rect.y - s/2, w: s, h: s },
+        'tr': { x: rect.x + rect.w - s/2, y: rect.y - s/2, w: s, h: s },
+        'bl': { x: rect.x - s/2, y: rect.y + rect.h - s/2, w: s, h: s },
+        'br': { x: rect.x + rect.w - s/2, y: rect.y + rect.h - s/2, w: s, h: s }
+      };
+    }
+
+    function hexToRgba(hex, alpha) {
+      let c;
+      if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
+        c = hex.substring(1).split('');
+        if (c.length === 3) {
+          c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+        }
+        c = '0x' + c.join('');
+        return `rgba(${[(c >> 16) & 255, (c >> 8) & 255, c & 255].join(',')},${alpha})`;
+      }
+      return `rgba(56, 189, 248, ${alpha})`;
+    }
+
+    function getCanvasMousePos(e) {
+      const rect = mossCanvas.getBoundingClientRect();
+      const scaleX = mossCanvas.width / rect.width;
+      const scaleY = mossCanvas.height / rect.height;
+      return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+      };
+    }
+
+    /* Canvas Mouse Interactions */
+    function setupCanvas() {
+      mossCanvas.addEventListener('mousedown', (e) => {
+        const pos = getCanvasMousePos(e);
+        dragStartPos = pos;
+
+        const items = appState.layout_json?.items || [];
+
+        // Check if clicked on resize handle of selected item
+        if (selectedItemIndex >= 0 && items[selectedItemIndex]?.bbox) {
+          const rect = bboxToCanvasRect(items[selectedItemIndex].bbox);
+          const handles = getHandles(rect);
+          for (const key in handles) {
+            const h = handles[key];
+            if (pos.x >= h.x && pos.x <= h.x + h.w && pos.y >= h.y && pos.y <= h.y + h.h) {
+              dragMode = `resize-${key}`;
+              initialBbox = [...items[selectedItemIndex].bbox];
+              return;
+            }
+          }
+        }
+
+        // Check if clicked inside any existing bounding box (select / move)
+        let clickedIndex = -1;
+        for (let i = items.length - 1; i >= 0; i--) {
+          if (!items[i].bbox) continue;
+          const rect = bboxToCanvasRect(items[i].bbox);
+          if (pos.x >= rect.x && pos.x <= rect.x + rect.w && pos.y >= rect.y && pos.y <= rect.y + rect.h) {
+            clickedIndex = i;
+            break;
+          }
+        }
+
+        if (clickedIndex !== -1) {
+          selectItem(clickedIndex);
+          dragMode = 'move';
+          initialBbox = [...items[clickedIndex].bbox];
+        } else {
+          // If no item is selected, or clicked empty space, start creating a new bbox for current item
+          if (selectedItemIndex >= 0 && items[selectedItemIndex]) {
+            dragMode = 'create';
+          }
+        }
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!dragMode) return;
+        const pos = getCanvasMousePos(e);
+        const items = appState.layout_json?.items || [];
+        const item = items[selectedItemIndex];
+        if (!item) return;
+
+        const dx = pos.x - dragStartPos.x;
+        const dy = pos.y - dragStartPos.y;
+
+        if (dragMode === 'create') {
+          const rect = {
+            x: Math.min(dragStartPos.x, pos.x),
+            y: Math.min(dragStartPos.y, pos.y),
+            w: Math.abs(pos.x - dragStartPos.x),
+            h: Math.abs(pos.y - dragStartPos.y)
+          };
+          if (rect.w > 5 && rect.h > 5) {
+            item.bbox = canvasRectToBbox(rect);
+          }
+        } else if (dragMode === 'move') {
+          const initRect = bboxToCanvasRect(initialBbox);
+          const newRect = {
+            x: initRect.x + dx,
+            y: initRect.y + dy,
+            w: initRect.w,
+            h: initRect.h
+          };
+          item.bbox = canvasRectToBbox(newRect);
+        } else if (dragMode.startsWith('resize-')) {
+          const handle = dragMode.replace('resize-', '');
+          const initRect = bboxToCanvasRect(initialBbox);
+          let newRect = { ...initRect };
+
+          if (handle === 'tl') {
+            newRect.x = initRect.x + dx;
+            newRect.y = initRect.y + dy;
+            newRect.w = initRect.w - dx;
+            newRect.h = initRect.h - dy;
+          } else if (handle === 'tr') {
+            newRect.y = initRect.y + dy;
+            newRect.w = initRect.w + dx;
+            newRect.h = initRect.h - dy;
+          } else if (handle === 'bl') {
+            newRect.x = initRect.x + dx;
+            newRect.w = initRect.w - dx;
+            newRect.h = initRect.h + dy;
+          } else if (handle === 'br') {
+            newRect.w = initRect.w + dx;
+            newRect.h = initRect.h + dy;
+          }
+
+          if (newRect.w > 10 && newRect.h > 10) {
+            item.bbox = canvasRectToBbox(newRect);
+          }
+        }
+
+        // Update item card inputs
+        const currentCard = document.querySelector(`.item-card[data-index="${selectedItemIndex}"]`);
+        if (currentCard && item.bbox) {
+          const bboxInput = currentCard.querySelector('.item-bbox-input');
+          if (bboxInput) bboxInput.value = item.bbox.join(', ');
+        }
+
+        drawCanvas();
+        updateJsonPreview();
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (dragMode) {
+          dragMode = null;
+          initialBbox = null;
+          renderItems();
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        resizeCanvasToFit();
+        drawCanvas();
+      });
+    }
+
+    /* ==========================================================================
+       Tag Dictionary & CSV Import/Export
+       ========================================================================== */
+    let currentTagCategory = 'all';
+
+    function renderTags() {
+      const tagsGrid = document.getElementById('tagsGridContainer');
+      const searchWord = document.getElementById('tagSearchInput').value.toLowerCase().trim();
+      tagsGrid.innerHTML = '';
+
+      const allTags = getAllTags();
+      const filtered = allTags.filter(tag => {
+        const matchCat = (currentTagCategory === 'all' || tag.category === currentTagCategory);
+        const matchSearch = (!searchWord || 
+          tag.ja.toLowerCase().includes(searchWord) || 
+          tag.en.toLowerCase().includes(searchWord) ||
+          tag.category.toLowerCase().includes(searchWord)
+        );
+        return matchCat && matchSearch;
+      });
+
+      document.getElementById('tagCountDisplay').textContent = `${filtered.length} 件`;
+
+      filtered.forEach(tag => {
+        const pill = document.createElement('div');
+        pill.className = 'tag-pill';
+        pill.title = `${tag.category} : ${tag.ja} -> ${tag.en}`;
+        pill.innerHTML = `
+          <span class="en-text">${escapeHtml(tag.en)}</span>
+          <span class="ja-text">${escapeHtml(tag.ja)}</span>
+        `;
+        pill.addEventListener('click', () => {
+          insertTagIntoActiveInput(tag.en);
+        });
+        tagsGrid.appendChild(pill);
+      });
+    }
+
+    function insertTagIntoActiveInput(tagEn) {
+      let targetInput = lastFocusedInput;
+      if (!targetInput || !document.body.contains(targetInput)) {
+        // Fallback to active item's caption or summary caption
+        const activeCard = document.querySelector(`.item-card[data-index="${selectedItemIndex}"]`);
+        if (activeCard) {
+          targetInput = activeCard.querySelector('.item-caption-input');
+        } else {
+          targetInput = summaryCaptionInput;
+        }
+      }
+
+      if (targetInput) {
+        const cur = targetInput.value.trim();
+        if (cur.length === 0) {
+          targetInput.value = tagEn;
+        } else if (cur.endsWith(',')) {
+          targetInput.value = `${cur} ${tagEn}`;
+        } else {
+          targetInput.value = `${cur}, ${tagEn}`;
+        }
+        targetInput.dispatchEvent(new Event('input'));
+        showToast(`タグ「${tagEn}」を挿入しました`);
+      }
+    }
+
+    function handleCsvFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target.result;
+        parseAndLoadCsv(content);
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    function parseAndLoadCsv(csvText) {
+      const lines = csvText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length === 0) return;
+
+      const newTags = [];
+      lines.forEach((line, idx) => {
+        // Ignore typical headers
+        if (idx === 0 && (line.toLowerCase().includes('category') || line.toLowerCase().includes('english'))) {
+          return;
+        }
+        const cols = line.split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
+        if (cols.length >= 3) {
+          newTags.push({ category: cols[0] || 'カスタム', ja: cols[1], en: cols[2] });
+        } else if (cols.length === 2) {
+          // guess ja, en
+          newTags.push({ category: '一般', ja: cols[0], en: cols[1] });
+        } else if (cols.length === 1 && cols[0]) {
+          newTags.push({ category: '一般', ja: cols[0], en: cols[0] });
+        }
+      });
+
+      if (newTags.length > 0) {
+        customTags = [...customTags, ...newTags];
+        try {
+          localStorage.setItem('mossimage_custom_tags', JSON.stringify(customTags));
+        } catch(e) {}
+        renderTags();
+        showToast(`${newTags.length} 件のタグをCSVから読み込みました！`);
+      } else {
+        alert('有効なタグ行が見つかりませんでした。フォーマットは「カテゴリ,日本語,英語」または「日本語,英語」です。');
+      }
+    }
+
+    function exportCsv() {
+      const tags = getAllTags();
+      let csvContent = "category,japanese,english\n";
+      tags.forEach(t => {
+        csvContent += `"${t.category}","${t.ja}","${t.en}"\n`;
+      });
+      downloadFile(csvContent, 'mossimage_tags.csv', 'text/csv;charset=utf-8;');
+    }
+
+    /* ==========================================================================
+       Translation Logic (MyMemory API + Fallback)
+       ========================================================================== */
+    async function translateText(text) {
+      if (!text || !text.trim()) return "";
+
+      // Check if text already looks purely English/alphanumeric
+      if (/^[a-zA-Z0-9\s,._\-:;'"!?()]+$/.test(text)) {
+        return text;
+      }
+
+      try {
+        const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ja|en`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.responseData && data.responseData.translatedText) {
+            let resText = data.responseData.translatedText;
+            // Clean up html entities if returned
+            const div = document.createElement('div');
+            div.innerHTML = resText;
+            return div.textContent.toLowerCase();
+          }
+        }
+      } catch (err) {
+        console.warn("Translation API call failed, using dictionary fallback", err);
+      }
+
+      // Dictionary fallback keyword replace
+      let fallbackText = text;
+      const allTags = getAllTags();
+      // sort by length descending to match longest phrases first
+      const sorted = [...allTags].sort((a,b) => b.ja.length - a.ja.length);
+      for (const item of sorted) {
+        if (fallbackText.includes(item.ja)) {
+          fallbackText = fallbackText.split(item.ja).join(` ${item.en} `);
+        }
+      }
+      return fallbackText.trim().replace(/\s+/g, ' ');
+    }
+
+    /* ==========================================================================
+       Event Listeners
+       ========================================================================== */
+    function bindEvents() {
+      // Inputs event delegation
+      [taskNameInput, imgWidthInput, imgHeightInput, stepsInput, cfgInput, seedInput, summaryMetaInput, summaryCanvasInput, summaryCaptionInput].forEach(elem => {
+        elem.addEventListener('input', syncStateFromInputs);
+      });
+
+      imgWidthInput.addEventListener('change', () => {
+        resizeCanvasToFit();
+        drawCanvas();
+      });
+      imgHeightInput.addEventListener('change', () => {
+        resizeCanvasToFit();
+        drawCanvas();
+      });
+
+      // Resolution Preset Chips
+      document.querySelectorAll('#resPresets .chip').forEach(chip => {
+        chip.addEventListener('click', (e) => {
+          document.querySelectorAll('#resPresets .chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          const w = parseInt(chip.dataset.w, 10);
+          const h = parseInt(chip.dataset.h, 10);
+          imgWidthInput.value = w;
+          imgHeightInput.value = h;
+          syncStateFromInputs();
+          resizeCanvasToFit();
+          drawCanvas();
+        });
+      });
+
+      // Random Seed Button
+      document.getElementById('btnRandomSeed').addEventListener('click', (e) => {
+        e.preventDefault();
+        seedInput.value = Math.floor(Math.random() * 99999999);
+        syncStateFromInputs();
+      });
+
+      // Summary Caption Translate
+      document.getElementById('btnTranslateSummary').addEventListener('click', async () => {
+        const btn = document.getElementById('btnTranslateSummary');
+        const text = summaryCaptionInput.value;
+        if (!text.trim()) return;
+        btn.innerHTML = '<span class="spinner"></span>';
+        const translated = await translateText(text);
+        summaryCaptionInput.value = translated;
+        btn.innerHTML = '🌐 日→英';
+        syncStateFromInputs();
+        showToast('全体Captionを英訳しました');
+      });
+
+      // Add Object Item
+      document.getElementById('btnAddObjectItem').addEventListener('click', () => {
+        const w = appState.width;
+        const h = appState.height;
+        const nextColor = ITEM_COLORS[appState.layout_json.items.length % ITEM_COLORS.length];
+        const newItem = {
+          label: "object",
+          caption: "new object",
+          bbox: [Math.round(-h * 0.2), Math.round(-w * 0.2), Math.round(h * 0.2), Math.round(w * 0.2)],
+          color: nextColor
+        };
+        appState.layout_json.items.push(newItem);
+        selectedItemIndex = appState.layout_json.items.length - 1;
+        renderItems();
+        updateJsonPreview();
+        drawCanvas();
+      });
+
+      // Add Text Item
+      document.getElementById('btnAddTextItem').addEventListener('click', () => {
+        const w = appState.width;
+        const h = appState.height;
+        const nextColor = ITEM_COLORS[appState.layout_json.items.length % ITEM_COLORS.length];
+        const newItem = {
+          label: "text",
+          caption: "TEXT",
+          text: "HELLO",
+          bbox: [Math.round(h * 0.1), Math.round(-w * 0.3), Math.round(h * 0.3), Math.round(w * 0.3)],
+          color: nextColor
+        };
+        appState.layout_json.items.push(newItem);
+        selectedItemIndex = appState.layout_json.items.length - 1;
+        renderItems();
+        updateJsonPreview();
+        drawCanvas();
+      });
+
+      // Canvas buttons
+      document.getElementById('btnResetBoxes').addEventListener('click', () => {
+        if (confirm('すべてのアイテムのBBoxをリセットしますか？')) {
+          appState.layout_json.items.forEach(it => delete it.bbox);
+          renderItems();
+          drawCanvas();
+          updateJsonPreview();
+        }
+      });
+
+      document.getElementById('btnFitCanvas').addEventListener('click', () => {
+        resizeCanvasToFit();
+        drawCanvas();
+      });
+
+      // Tabs
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById(btn.dataset.tab).classList.add('active');
+        });
+      });
+
+      // Tag Categories & Search
+      document.querySelectorAll('.tag-category-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tag-category-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentTagCategory = btn.dataset.cat;
+          renderTags();
+        });
+      });
+      document.getElementById('tagSearchInput').addEventListener('input', renderTags);
+
+      // CSV Drop & File select
+      const csvDropZone = document.getElementById('csvDropZone');
+      const csvFileInput = document.getElementById('csvFileInput');
+
+      csvDropZone.addEventListener('click', () => csvFileInput.click());
+      csvFileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          handleCsvFile(e.target.files[0]);
+        }
+      });
+
+      csvDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        csvDropZone.style.borderColor = 'var(--accent)';
+      });
+      csvDropZone.addEventListener('dragleave', () => {
+        csvDropZone.style.borderColor = 'var(--border-color)';
+      });
+      csvDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        csvDropZone.style.borderColor = 'var(--border-color)';
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          handleCsvFile(e.dataTransfer.files[0]);
+        }
+      });
+
+      document.getElementById('btnExportCsv').addEventListener('click', exportCsv);
+      document.getElementById('btnResetTags').addEventListener('click', () => {
+        if (confirm('カスタム追加されたタグをリセットして初期状態に戻しますか？')) {
+          customTags = [];
+          localStorage.removeItem('mossimage_custom_tags');
+          renderTags();
+          showToast('タグ辞書を初期化しました');
+        }
+      });
+
+      // Dedicated Translator Tab
+      document.getElementById('btnExecuteTranslate').addEventListener('click', async () => {
+        const ja = document.getElementById('transInputJa').value;
+        if (!ja.trim()) return;
+        const btn = document.getElementById('btnExecuteTranslate');
+        btn.innerHTML = '<span class="spinner"></span> 翻訳中...';
+        const en = await translateText(ja);
+        document.getElementById('transOutputEn').value = en;
+        btn.innerHTML = '🌐 英語に翻訳する';
+      });
+
+      document.getElementById('btnClearTrans').addEventListener('click', () => {
+        document.getElementById('transInputJa').value = '';
+        document.getElementById('transOutputEn').value = '';
+      });
+
+      document.getElementById('btnApplyTransToSummary').addEventListener('click', () => {
+        const en = document.getElementById('transOutputEn').value.trim();
+        if (!en) return;
+        insertTagIntoTarget(summaryCaptionInput, en);
+        syncStateFromInputs();
+        showToast('全体Captionに追加しました');
+      });
+
+      document.getElementById('btnApplyTransToSelectedItem').addEventListener('click', () => {
+        const en = document.getElementById('transOutputEn').value.trim();
+        if (!en) return;
+        const activeCard = document.querySelector(`.item-card[data-index="${selectedItemIndex}"]`);
+        if (activeCard) {
+          const input = activeCard.querySelector('.item-caption-input');
+          insertTagIntoTarget(input, en);
+          appState.layout_json.items[selectedItemIndex].caption = input.value;
+          updateJsonPreview();
+          showToast('選択中アイテムのCaptionに追加しました');
+        } else {
+          alert('アイテムが選択されていません');
+        }
+      });
+
+      function insertTagIntoTarget(inputElem, text) {
+        const cur = inputElem.value.trim();
+        if (cur.length === 0) {
+          inputElem.value = text;
+        } else if (cur.endsWith(',')) {
+          inputElem.value = `${cur} ${text}`;
+        } else {
+          inputElem.value = `${cur}, ${text}`;
+        }
+      }
+
+      // JSON Copy & Export & Import
+      function copyJsonToClipboard() {
+        const text = jsonOutputArea.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          showToast('JSONをクリップボードにコピーしました！');
+        }).catch(err => {
+          alert('コピーに失敗しました: ' + err);
+        });
+      }
+
+      document.getElementById('btnCopyJson').addEventListener('click', copyJsonToClipboard);
+      document.getElementById('btnCopyJsonTab').addEventListener('click', copyJsonToClipboard);
+
+      document.getElementById('btnExportJson').addEventListener('click', () => {
+        const text = jsonOutputArea.textContent;
+        const filename = `${appState.task_name || 'mossimage_task'}.json`;
+        downloadFile(text, filename, 'application/json');
+      });
+
+      // Default load button
+      document.getElementById('btnLoadDefault').addEventListener('click', () => {
+        if (confirm('初期サンプル（hiyori_tuning）の設定に復元しますか？')) {
+          appState = JSON.parse(JSON.stringify(DEFAULT_TASK_JSON));
+          selectedItemIndex = 0;
+          renderFormFromState();
+          showToast('初期設定を復元しました');
+        }
+      });
+
+      // Import JSON
+      const jsonFileInput = document.getElementById('jsonFileInput');
+      document.getElementById('btnImportJson').addEventListener('click', () => {
+        jsonFileInput.click();
+      });
+
+      jsonFileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            try {
+              const loaded = JSON.parse(event.target.result);
+              loadTaskJson(loaded);
+              showToast('JSONファイルを読み込みました');
+            } catch (err) {
+              alert('JSONのパースに失敗しました: ' + err.message);
+            }
+          };
+          reader.readAsText(e.target.files[0]);
+        }
+      });
+    }
+
+    function loadTaskJson(json) {
+      if (!json || typeof json !== 'object') return;
+      appState = {
+        task_name: json.task_name || "moss_task",
+        width: json.width || 1024,
+        height: json.height || 576,
+        steps: json.steps !== undefined ? json.steps : 30,
+        cfg: json.cfg !== undefined ? json.cfg : 3.0,
+        seed: json.seed !== undefined ? json.seed : -1,
+        layout_json: json.layout_json || {
+          summary: { meta: [], canvas: "single", caption: "" },
+          items: [],
+          bbox_coord_space: "abs_centralized",
+          bbox_format: "yxyx"
+        }
+      };
+
+      if (!appState.layout_json.summary) {
+        appState.layout_json.summary = { meta: [], canvas: "single", caption: "" };
+      }
+      if (!Array.isArray(appState.layout_json.items)) {
+        appState.layout_json.items = [];
+      }
+
+      // Assign colors to loaded items
+      appState.layout_json.items.forEach((it, idx) => {
+        it.color = ITEM_COLORS[idx % ITEM_COLORS.length];
+      });
+
+      selectedItemIndex = appState.layout_json.items.length > 0 ? 0 : -1;
+      renderFormFromState();
+    }
+
+    function downloadFile(content, fileName, contentType) {
+      const a = document.createElement("a");
+      const file = new Blob([content], { type: contentType });
+      a.href = URL.createObjectURL(file);
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Run
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

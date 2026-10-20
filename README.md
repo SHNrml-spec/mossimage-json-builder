@@ -1,0 +1,62 @@
+# MOSSImage JSON Builder & Layout Studio
+
+[English](#english) | [日本語](#japanese)
+
+---
+
+<a name="english"></a>
+## English
+
+An interactive, visual web tool to design and export task configuration JSON (`TASK_JSON`) for **MOSS-Image** (an open-weights text-to-image model by OpenMOSS featuring native layout control).
+
+This tool is packaged as a lightweight, single-file HTML application (`index.html`) with **zero external dependencies** — just double-click or open it directly in any modern browser!
+
+### ✨ Key Features
+- **Visual Bounding Box Canvas**: Full support for MOSS-Image coordinate specifications (`bbox_coord_space: "abs_centralized"`, `bbox_format: "yxyx"`). Drag-and-drop to create, move, and resize layout boxes.
+- **Tag Dictionary & CSV Import/Export**: Built-in prompts/tags (quality, character, costume, composition, pose, etc.) with real-time bilingual search. Import your own CSV tags into browser local storage.
+- **Japanese to English Translation**: One-click bilingual translation directly on prompt fields (via free MyMemory API with offline dictionary fallback).
+- **One-Click JSON Export & Import**: Instant clipboard copy, `.json` file download, and full state restoration from existing JSON files.
+
+### 🚀 Quick Start
+1. Clone or download this repository.
+2. Open `index.html` in your browser (Chrome, Edge, Firefox, Safari).
+3. *(Optional)* Host it for free using **GitHub Pages** (Settings -> Pages -> Branch: `main` / `root`).
+
+---
+
+<a name="japanese"></a>
+## 日本語
+
+オープンソース画像生成AI **MOSS-Image**（レイアウト制御・テキスト描画対応）のタスク設定JSON（`TASK_JSON`）を、直感的なキャンバス操作で作成・編集できるWebツールです。
+
+外部ライブラリへの依存がなく、単一のHTMLファイル（`index.html`）のみで動作するため、サーバー不要でローカルのブラウザからすぐに利用できます。
+
+### ✨ 主な機能
+- **ビジュアル配置キャンバス**:
+  - MOSS-Image 独自の座標系（中央原点 `abs_centralized`、フォーマット `yxyx`: `[ymin, xmin, ymax, xmax]`）に完全準拠。
+  - キャンバス上でマウスドラッグして四角形（BBox）を作成・移動・リサイズするだけで自動計算。
+- **タグ辞書 & CSV連携**:
+  - 品質・人物・構図・衣装・ポーズなどの定番タグ集（日・英）を標準内蔵。
+  - タグをクリックするだけでプロンプトにワンタップ挿入。
+  - 独自CSVファイルのドラッグ＆ドロップ読み込みに対応（ブラウザの LocalStorage に自動保存）。
+- **日本語 → 英語 リアルタイム翻訳**:
+  - プロンプト入力欄の「🌐 日→英」ボタンを押すだけで即座に英語プロンプトに変換。
+  - 無料翻訳API（MyMemory）＋オフライン内蔵辞書フォールバックに対応。
+- **JSONのコピー・保存・読込**:
+  - ワンクリックでクリップボードへコピー、または `.json` ファイルとして保存。
+  - 既存のJSONファイルを読み込んでフォームやキャンバスに復元可能。
+
+### 🚀 使い方
+1. 本リポジトリをダウンロード（またはクローン）します。
+2. `index.html` をブラウザでダブルクリックして開きます。
+3. リポジトリの **GitHub Pages** を有効化（`Settings` > `Pages` で `main` ブランチを指定）すれば、URLを共有して誰でもブラウザ上で直接ツールを利用できます。
+
+---
+
+## 📜 License
+This project is open-sourced under the [MIT License](LICENSE).
+Feel free to use, modify, and share!
+
+### Third-Party Services Notice
+- Machine translation uses the public MyMemory Translation API.
+- All styles, scripts, and canvas rendering are implemented in pure vanilla HTML5/CSS/JavaScript with no external npm/CDN dependencies.
