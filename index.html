@@ -1544,7 +1544,7 @@
     }
 
     function getHandles(rect) {
-      const s = resizeHandleSize;
+      const s = resizeHandleSize / canvasScale;
       return {
         'tl': { x: rect.x - s/2, y: rect.y - s/2, w: s, h: s },
         'tr': { x: rect.x + rect.w - s/2, y: rect.y - s/2, w: s, h: s },
