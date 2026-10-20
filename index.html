@@ -610,7 +610,7 @@
       </div>
     </div>
     <div class="header-actions">
-      <button class="btn btn-sm" id="btnLoadDefault" title="ユーザー提示の初期設定を読み込みます">
+      <button class="btn btn-sm" id="btnLoadDefault" title="初期サンプルの設定を読み込みます">
         🔄 サンプル復元
       </button>
       <button class="btn btn-sm" id="btnImportJson">
@@ -860,7 +860,7 @@
 
   <script>
     /* ==========================================================================
-       Initial State & Clean Demo Example (GitHub Ready)
+       Initial State & Clean Demo Example
        ========================================================================== */
     const DEFAULT_TASK_JSON = {
       task_name: "mossimage_demo",
@@ -1333,7 +1333,6 @@
     }
 
     function updateJsonPreview() {
-      // Build clean JSON representation exactly as requested
       const cleanJson = {
         task_name: appState.task_name,
         width: appState.width,
@@ -1477,7 +1476,7 @@
       // Draw Grid & Axes
       ctx.lineWidth = 1;
 
-      // 50px subtle grid
+      // 64px subtle grid
       ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
       ctx.beginPath();
       for (let x = 0; x <= W; x += 64) {
