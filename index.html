@@ -1749,17 +1749,41 @@
       reader.readAsText(file, 'utf-8');
     }
 
+    function parseCsv(text) {
+      const rows = [];
+      let row = [], field = '', inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (inQuotes) {
+          if (c !== '"') field += c;
+          else if (text[i + 1] === '"') { field += '"'; i++; }
+          else inQuotes = false;
+        } else if (c === '"') {
+          inQuotes = true;
+        } else if (c === ',') {
+          row.push(field); field = '';
+        } else if (c === '\n' || c === '\r') {
+          if (c === '\r' && text[i + 1] === '\n') i++;
+          row.push(field); rows.push(row); row = []; field = '';
+        } else {
+          field += c;
+        }
+      }
+      if (field !== '' || row.length > 0) { row.push(field); rows.push(row); }
+      return rows.map(r => r.map(c => c.trim())).filter(r => r.some(c => c));
+    }
+
     function parseAndLoadCsv(csvText) {
-      const lines = csvText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-      if (lines.length === 0) return;
+      const rows = parseCsv(csvText);
+      if (rows.length === 0) return;
 
       const newTags = [];
-      lines.forEach((line, idx) => {
+      rows.forEach((cols, idx) => {
         // Ignore typical headers
-        if (idx === 0 && (line.toLowerCase().includes('category') || line.toLowerCase().includes('english'))) {
+        const head = cols.join(',').toLowerCase();
+        if (idx === 0 && (head.includes('category') || head.includes('english'))) {
           return;
         }
-        const cols = line.split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
         if (cols.length >= 3) {
           newTags.push({ category: cols[0] || 'カスタム', ja: cols[1], en: cols[2] });
         } else if (cols.length === 2) {
