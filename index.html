@@ -1011,7 +1011,7 @@
 
     /* Track last active input for tag insertion */
     document.addEventListener('focusin', (e) => {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+      if (e.target.matches('#summaryCaption, #summaryMeta, .item-caption-input')) {
         lastFocusedInput = e.target;
       }
     });
