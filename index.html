@@ -2079,12 +2079,18 @@
         if (e.target.files && e.target.files[0]) {
           const reader = new FileReader();
           reader.onload = (event) => {
+            let loaded;
             try {
-              const loaded = JSON.parse(event.target.result);
+              loaded = JSON.parse(event.target.result);
+            } catch (err) {
+              alert('JSONのパースに失敗しました: ' + err.message);
+              return;
+            }
+            try {
               loadTaskJson(loaded);
               showToast('JSONファイルを読み込みました');
             } catch (err) {
-              alert('JSONのパースに失敗しました: ' + err.message);
+              alert('JSONの内容が不正なため読み込みませんでした。' + err.message);
             }
           };
           reader.readAsText(e.target.files[0]);
@@ -2092,35 +2098,66 @@
       });
     }
 
-    function loadTaskJson(json) {
-      if (!json || typeof json !== 'object') return;
-      appState = {
-        task_name: json.task_name || "moss_task",
-        width: snapSize(json.width || 1024),
-        height: snapSize(json.height || 576),
-        steps: json.steps !== undefined ? json.steps : 30,
-        cfg: json.cfg !== undefined ? json.cfg : 3.0,
-        seed: json.seed !== undefined ? json.seed : -1,
-        layout_json: json.layout_json || {
-          summary: { meta: [], canvas: "single", caption: "" },
-          items: [],
-          bbox_coord_space: "abs_centralized",
-          bbox_format: "yxyx"
-        }
+    const isObject = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+    const isString = v => typeof v === 'string';
+    const isNumber = v => typeof v === 'number' && Number.isFinite(v);
+
+    function bboxError(bbox) {
+      if (!Array.isArray(bbox) || bbox.length !== 4) return '4つの数値の配列で指定してください';
+      if (!bbox.every(isNumber)) return '数値以外の値が含まれています';
+      const [ymin, xmin, ymax, xmax] = bbox;
+      if (!(ymin < ymax && xmin < xmax)) return 'ymin < ymax かつ xmin < xmax になるように指定してください';
+      return null;
+    }
+
+    // Returns a fresh state, or throws without touching the current one
+    function parseTaskJson(json) {
+      const fail = (where, msg) => { throw new Error(`${where}: ${msg}`); };
+      const field = (obj, key, check, fallback, where) => {
+        if (obj[key] === undefined) return fallback;
+        if (!check(obj[key])) fail(where + key, '値の型が不正です');
+        return obj[key];
       };
 
-      if (!appState.layout_json.summary) {
-        appState.layout_json.summary = { meta: [], canvas: "single", caption: "" };
-      }
-      if (!Array.isArray(appState.layout_json.items)) {
-        appState.layout_json.items = [];
-      }
-
-      // Assign colors to loaded items
-      appState.layout_json.items.forEach((it, idx) => {
-        it.color = ITEM_COLORS[idx % ITEM_COLORS.length];
+      if (!isObject(json)) fail('JSON', 'オブジェクトではありません');
+      const layout = field(json, 'layout_json', isObject, {}, '');
+      const summary = field(layout, 'summary', isObject, {}, 'layout_json.');
+      const items = field(layout, 'items', Array.isArray, [], 'layout_json.').map((it, i) => {
+        const where = `layout_json.items[${i}]`;
+        if (!isObject(it)) fail(where, 'オブジェクトではありません');
+        if (!isString(it.label)) fail(`${where}.label`, '文字列で指定してください');
+        const out = { label: it.label, caption: field(it, 'caption', isString, '', `${where}.`) };
+        if (it.text !== undefined) out.text = field(it, 'text', isString, '', `${where}.`);
+        if (it.bbox !== undefined) {
+          const err = bboxError(it.bbox);
+          if (err) fail(`${where}.bbox`, err);
+          out.bbox = [...it.bbox];
+        }
+        return out;
       });
 
+      return {
+        task_name: field(json, 'task_name', isString, 'moss_task', ''),
+        width: snapSize(field(json, 'width', isNumber, 1024, '')),
+        height: snapSize(field(json, 'height', isNumber, 576, '')),
+        steps: field(json, 'steps', isNumber, 30, ''),
+        cfg: field(json, 'cfg', isNumber, 3.0, ''),
+        seed: field(json, 'seed', isNumber, -1, ''),
+        layout_json: {
+          summary: {
+            meta: [...field(summary, 'meta', v => Array.isArray(v) && v.every(isString), [], 'layout_json.summary.')],
+            canvas: field(summary, 'canvas', isString, 'single', 'layout_json.summary.'),
+            caption: field(summary, 'caption', isString, '', 'layout_json.summary.')
+          },
+          items,
+          bbox_coord_space: layout.bbox_coord_space ?? 'abs_centralized',
+          bbox_format: layout.bbox_format ?? 'yxyx'
+        }
+      };
+    }
+
+    function loadTaskJson(json) {
+      appState = parseTaskJson(json);
       selectedItemIndex = appState.layout_json.items.length > 0 ? 0 : -1;
       renderFormFromState();
     }
