@@ -1803,10 +1803,9 @@
           const data = await res.json();
           if (data && data.responseData && data.responseData.translatedText) {
             let resText = data.responseData.translatedText;
-            // Clean up html entities if returned
-            const div = document.createElement('div');
-            div.innerHTML = resText;
-            return div.textContent.toLowerCase();
+            // Decode HTML entities without running any markup
+            const doc = new DOMParser().parseFromString(resText, 'text/html');
+            return doc.documentElement.textContent.toLowerCase();
           }
         }
       } catch (err) {
