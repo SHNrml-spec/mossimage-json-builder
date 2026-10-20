@@ -2115,7 +2115,7 @@
       const fail = (where, msg) => { throw new Error(`${where}: ${msg}`); };
       const field = (obj, key, check, fallback, where) => {
         if (obj[key] === undefined) return fallback;
-        if (!check(obj[key])) fail(where + key, '値の型が不正です');
+        if (!check(obj[key])) fail(where + key, '対応していない値です');
         return obj[key];
       };
 
@@ -2150,8 +2150,8 @@
             caption: field(summary, 'caption', isString, '', 'layout_json.summary.')
           },
           items,
-          bbox_coord_space: layout.bbox_coord_space ?? 'abs_centralized',
-          bbox_format: layout.bbox_format ?? 'yxyx'
+          bbox_coord_space: field(layout, 'bbox_coord_space', v => v === 'abs_centralized', 'abs_centralized', 'layout_json.'),
+          bbox_format: field(layout, 'bbox_format', v => v === 'yxyx', 'yxyx', 'layout_json.')
         }
       };
     }
