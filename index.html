@@ -1034,6 +1034,7 @@
       summaryCaptionInput.value = summary.caption || "";
 
       renderItems();
+      updatePresetChips();
       resizeCanvasToFit();
       drawCanvas();
       updateJsonPreview();
@@ -1082,9 +1083,17 @@
         if (it.bbox) it.bbox = fitBbox(it.bbox);
       });
       renderItems();
+      updatePresetChips();
       resizeCanvasToFit();
       drawCanvas();
       updateJsonPreview();
+    }
+
+    function updatePresetChips() {
+      document.querySelectorAll('#resPresets .chip').forEach(chip => {
+        const match = Number(chip.dataset.w) === appState.width && Number(chip.dataset.h) === appState.height;
+        chip.classList.toggle('active', match);
+      });
     }
 
     function commitGenerationInputs() {
@@ -1926,8 +1935,6 @@
       // Resolution Preset Chips
       document.querySelectorAll('#resPresets .chip').forEach(chip => {
         chip.addEventListener('click', (e) => {
-          document.querySelectorAll('#resPresets .chip').forEach(c => c.classList.remove('active'));
-          chip.classList.add('active');
           imgWidthInput.value = chip.dataset.w;
           imgHeightInput.value = chip.dataset.h;
           commitSizeInputs();
