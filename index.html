@@ -1811,7 +1811,7 @@
             let resText = data.responseData.translatedText;
             // Decode HTML entities without running any markup
             const doc = new DOMParser().parseFromString(resText, 'text/html');
-            return doc.documentElement.textContent.toLowerCase();
+            return doc.documentElement.textContent;
           }
         }
       } catch (err) {
