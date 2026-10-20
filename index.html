@@ -1042,9 +1042,9 @@
       appState.task_name = taskNameInput.value.trim();
       appState.width = parseInt(imgWidthInput.value, 10) || 1024;
       appState.height = parseInt(imgHeightInput.value, 10) || 576;
-      appState.steps = parseInt(stepsInput.value, 10) || 30;
-      appState.cfg = parseFloat(cfgInput.value) || 3.0;
-      appState.seed = parseInt(seedInput.value, 10) || -1;
+      appState.steps = Math.round(parseNumberOr(stepsInput.value, appState.steps));
+      appState.cfg = parseNumberOr(cfgInput.value, appState.cfg);
+      appState.seed = Math.trunc(parseNumberOr(seedInput.value, appState.seed));
 
       if (!appState.layout_json) appState.layout_json = {};
       if (!appState.layout_json.summary) appState.layout_json.summary = {};
@@ -1062,6 +1062,20 @@
 
       updateJsonPreview();
       drawCanvas();
+    }
+
+    function parseNumberOr(value, fallback) {
+      const n = parseFloat(value);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function commitGenerationInputs() {
+      appState.steps = Math.max(Number(stepsInput.min), appState.steps);
+      appState.cfg = Math.max(Number(cfgInput.min), appState.cfg);
+      stepsInput.value = appState.steps;
+      cfgInput.value = appState.cfg;
+      seedInput.value = appState.seed;
+      updateJsonPreview();
     }
 
     function renderItems() {
@@ -1801,6 +1815,9 @@
       // Inputs event delegation
       [taskNameInput, imgWidthInput, imgHeightInput, stepsInput, cfgInput, seedInput, summaryMetaInput, summaryCanvasInput, summaryCaptionInput].forEach(elem => {
         elem.addEventListener('input', syncStateFromInputs);
+      });
+      [stepsInput, cfgInput, seedInput].forEach(elem => {
+        elem.addEventListener('change', commitGenerationInputs);
       });
 
       imgWidthInput.addEventListener('change', () => {
