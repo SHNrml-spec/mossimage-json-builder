@@ -1420,6 +1420,28 @@
       ];
     }
 
+    // Shift the box inside the image, shrinking it only when it is larger than the image
+    function fitBbox(bbox) {
+      const fit = (min, max, half) => {
+        const size = Math.min(max - min, half * 2);
+        const start = Math.min(Math.max(min, -half), half - size);
+        return [Math.round(start), Math.round(start + size)];
+      };
+      const [ymin, ymax] = fit(bbox[0], bbox[2], appState.height / 2);
+      const [xmin, xmax] = fit(bbox[1], bbox[3], appState.width / 2);
+      return [ymin, xmin, ymax, xmax];
+    }
+
+    // Cut off the part outside the image; null when nothing remains
+    function clipBbox(bbox) {
+      const halfW = appState.width / 2, halfH = appState.height / 2;
+      const clipped = [
+        Math.max(bbox[0], -halfH), Math.max(bbox[1], -halfW),
+        Math.min(bbox[2], halfH), Math.min(bbox[3], halfW)
+      ];
+      return bboxError(clipped) ? null : clipped;
+    }
+
     function drawCanvas() {
       const W = mossCanvas.width;
       const H = mossCanvas.height;
@@ -1614,7 +1636,7 @@
             h: Math.abs(pos.y - dragStartPos.y)
           };
           if (rect.w > 5 && rect.h > 5) {
-            item.bbox = canvasRectToBbox(rect);
+            item.bbox = clipBbox(canvasRectToBbox(rect)) || item.bbox;
           }
         } else if (dragMode === 'move') {
           const initRect = bboxToCanvasRect(initialBbox);
@@ -1624,7 +1646,7 @@
             w: initRect.w,
             h: initRect.h
           };
-          item.bbox = canvasRectToBbox(newRect);
+          item.bbox = fitBbox(canvasRectToBbox(newRect));
         } else if (dragMode.startsWith('resize-')) {
           const handle = dragMode.replace('resize-', '');
           const initRect = bboxToCanvasRect(initialBbox);
@@ -1649,7 +1671,7 @@
           }
 
           if (newRect.w > 10 && newRect.h > 10) {
-            item.bbox = canvasRectToBbox(newRect);
+            item.bbox = clipBbox(canvasRectToBbox(newRect)) || item.bbox;
           }
         }
 
