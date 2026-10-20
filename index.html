@@ -1128,7 +1128,7 @@
         card.innerHTML = `
           <div class="item-header">
             <div class="item-badge">
-              <span class="item-color-dot" style="background-color: ${item.color};"></span>
+              <span class="item-color-dot" style="background-color: ${escapeHtml(item.color)};"></span>
               <span>#${index + 1} ${escapeHtml(item.label || 'item')}</span>
             </div>
             <div class="item-actions">
@@ -1149,7 +1149,7 @@
             </div>
             <div class="form-group">
               <label>BBox (yxyx)</label>
-              <input type="text" class="item-bbox-input" value="${item.bbox ? item.bbox.join(', ') : ''}" placeholder="ymin, xmin, ymax, xmax">
+              <input type="text" class="item-bbox-input" value="${item.bbox ? escapeHtml(item.bbox.join(', ')) : ''}" placeholder="ymin, xmin, ymax, xmax">
             </div>
           </div>
 
