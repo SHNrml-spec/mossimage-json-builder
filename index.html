@@ -2155,7 +2155,7 @@
 
       // Default load button
       document.getElementById('btnLoadDefault').addEventListener('click', () => {
-        if (confirm('初期サンプル（hiyori_tuning）の設定に復元しますか？')) {
+        if (confirm('初期サンプルの設定に復元しますか？')) {
           appState = JSON.parse(JSON.stringify(DEFAULT_TASK_JSON));
           selectedItemIndex = 0;
           renderFormFromState();
