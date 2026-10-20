@@ -1785,7 +1785,7 @@
       rows.forEach((cols, idx) => {
         // Ignore typical headers
         const head = cols.join(',').toLowerCase();
-        if (idx === 0 && (head.includes('category') || head.includes('english'))) {
+        if (idx === 0 && ['category', 'english', 'カテゴリ', '英語'].some(w => head.includes(w))) {
           return;
         }
         let tag = null;
