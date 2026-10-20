@@ -1796,8 +1796,8 @@
     async function translateText(text) {
       if (!text || !text.trim()) return "";
 
-      // Check if text already looks purely English/alphanumeric
-      if (/^[a-zA-Z0-9\s,._\-:;'"!?()]+$/.test(text)) {
+      // Skip text without kana, kanji or full-width characters
+      if (!/[　-ヿ㐀-鿿豈-﫿＀-￯]/.test(text)) {
         return text;
       }
 
