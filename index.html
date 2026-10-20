@@ -1615,8 +1615,8 @@
           dragMode = 'move';
           initialBbox = [...items[clickedIndex].bbox];
         } else {
-          // If no item is selected, or clicked empty space, start creating a new bbox for current item
-          if (selectedItemIndex >= 0 && items[selectedItemIndex]) {
+          // Empty space draws a box only for a selected item that has none yet
+          if (selectedItemIndex >= 0 && items[selectedItemIndex] && !items[selectedItemIndex].bbox) {
             dragMode = 'create';
           }
         }
