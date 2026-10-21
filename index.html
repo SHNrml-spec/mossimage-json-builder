@@ -643,11 +643,8 @@
       </div>
     </div>
     <div class="header-actions">
-      <button class="btn btn-sm" id="btnLoadDefault" title="通常の新規生成サンプルを読み込みます">
-        🎨 生成例ロード
-      </button>
-      <button class="btn btn-sm" id="btnLoadEditSample" title="画像編集（inpaint）の実例サンプルを読み込みます">
-        🖌️ 編集例ロード
+      <button class="btn btn-sm" id="btnLoadDefault" title="初期サンプルを読み込みます">
+        🔄 サンプル復元
       </button>
       <button class="btn btn-sm" id="btnImportJson">
         📂 JSON読込
@@ -693,11 +690,14 @@
         <!-- Image Edit Options (画像編集モード時のみ表示) -->
         <div id="imageEditConfigArea" style="display:none; flex-direction:column; gap:8px; background:rgba(56, 189, 248, 0.05); border:1px solid rgba(56, 189, 248, 0.2); border-radius:6px; padding:10px;">
           <div class="form-group">
-            <label>
-              元画像パス (init_image)
-              <a href="#" id="btnResetColabPath" style="color:var(--accent); text-decoration:none; font-size:10px;" title="/content/uploaded_input.png をセット">⚡Colabパス固定</a>
-            </label>
-            <input type="text" id="initImagePath" value="/content/uploaded_input.png" placeholder="例: /content/uploaded_input.png">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <label style="margin-bottom:0;">元画像パス (init_image)</label>
+              <label style="cursor:pointer; display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text-muted);" title="ONにすると画像を読み込んでも /content/uploaded_input.png に固定します">
+                <input type="checkbox" id="chkColabFixedPath" style="cursor:pointer; accent-color:var(--accent);">
+                <span>⚡ Colab固定 (/content/uploaded_input.png)</span>
+              </label>
+            </div>
+            <input type="text" id="initImagePath" value="input.png" placeholder="例: input.png または /content/uploaded_input.png">
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -1009,40 +1009,10 @@
       }
     };
 
-    /* Image Editing Real Sample (User Provided Specification) */
-    const EDIT_SAMPLE_TASK_JSON = {
-      task_name: "test_girl_angry_diff",
-      init_image: "/content/uploaded_input.png",
-      edit_mode: "inpaint",
-      denoising_strength: 0.85,
-      mask_feather: 8,
-      width: 1344,
-      height: 768,
-      steps: 35,
-      cfg: 3.0,
-      seed: -1,
-      layout_json: {
-        summary: {
-          meta: ["game screen", "character sprite"],
-          canvas: "single",
-          caption: "anime visual novel style, high quality character expression variation, masterpiece"
-        },
-        items: [
-          {
-            label: "object",
-            caption: "close-up of anime girl's face with an angry expression, furrowed eyebrows, pouting cheeks, slight blush, intensely glaring with upset and annoyed cute look",
-            bbox: [-220, -180, 50, 180],
-            color: "#38bdf8"
-          }
-        ],
-        bbox_coord_space: "abs_centralized",
-        bbox_format: "yxyx"
-      }
-    };
-
     let appState = JSON.parse(JSON.stringify(DEFAULT_TASK_JSON));
     appState.task_mode = "generate"; // "generate" or "edit"
-    appState.init_image = "/content/uploaded_input.png";
+    appState.init_image = "input.png";
+    appState.colab_fixed = false;
     appState.edit_mode = "inpaint";
     appState.denoising_strength = 0.85;
     appState.mask_feather = 8;
@@ -1133,6 +1103,7 @@
     const taskModeRadios = document.querySelectorAll('input[name="taskMode"]');
     const imageEditConfigArea = document.getElementById('imageEditConfigArea');
     const initImagePathInput = document.getElementById('initImagePath');
+    const chkColabFixedPath = document.getElementById('chkColabFixedPath');
     const editModeSelect = document.getElementById('editModeSelect');
     const denoisingStrengthInput = document.getElementById('denoisingStrengthInput');
     const maskFeatherInput = document.getElementById('maskFeatherInput');
@@ -1208,7 +1179,8 @@
         radio.checked = (radio.value === (isEdit ? 'edit' : 'generate'));
       });
       imageEditConfigArea.style.display = isEdit ? 'flex' : 'none';
-      initImagePathInput.value = appState.init_image || "/content/uploaded_input.png";
+      chkColabFixedPath.checked = !!appState.colab_fixed;
+      initImagePathInput.value = appState.colab_fixed ? "/content/uploaded_input.png" : (appState.init_image || "input.png");
       editModeSelect.value = appState.edit_mode || "inpaint";
       denoisingStrengthInput.value = appState.denoising_strength !== undefined ? appState.denoising_strength : 0.85;
       maskFeatherInput.value = appState.mask_feather !== undefined ? appState.mask_feather : 8;
@@ -1230,7 +1202,13 @@
       const selectedMode = document.querySelector('input[name="taskMode"]:checked')?.value || 'generate';
       appState.task_mode = selectedMode;
       imageEditConfigArea.style.display = (selectedMode === 'edit') ? 'flex' : 'none';
-      appState.init_image = initImagePathInput.value.trim() || "/content/uploaded_input.png";
+      appState.colab_fixed = chkColabFixedPath.checked;
+      if (appState.colab_fixed) {
+        appState.init_image = "/content/uploaded_input.png";
+        initImagePathInput.value = "/content/uploaded_input.png";
+      } else {
+        appState.init_image = initImagePathInput.value.trim() || (bgImageName || "input.png");
+      }
       appState.edit_mode = editModeSelect.value;
       appState.denoising_strength = parseFloat(denoisingStrengthInput.value) || 0.85;
       appState.mask_feather = parseInt(maskFeatherInput.value, 10) || 8;
@@ -2039,15 +2017,22 @@
         });
       }
 
-      const btnResetColabPath = document.getElementById('btnResetColabPath');
-      if (btnResetColabPath) {
-        btnResetColabPath.addEventListener('click', (e) => {
-          e.preventDefault();
-          initImagePathInput.value = "/content/uploaded_input.png";
-          appState.init_image = "/content/uploaded_input.png";
+      if (chkColabFixedPath) {
+        chkColabFixedPath.addEventListener('change', () => {
+          if (chkColabFixedPath.checked) {
+            appState.colab_fixed = true;
+            appState.init_image = "/content/uploaded_input.png";
+            initImagePathInput.value = "/content/uploaded_input.png";
+            showToast('Colab固定ON: /content/uploaded_input.png に固定');
+          } else {
+            appState.colab_fixed = false;
+            const defaultName = bgImageName || "input.png";
+            appState.init_image = defaultName;
+            initImagePathInput.value = defaultName;
+            showToast(`Colab固定OFF: 画像名 (${defaultName}) を使用`);
+          }
           syncStateFromInputs();
           updateJsonPreview();
-          showToast('init_image を /content/uploaded_input.png に設定しました');
         });
       }
 
@@ -2167,10 +2152,13 @@
             btnToggleBgVisible.innerHTML = `👁️ 表示中`;
             bgImageVisible = true;
 
-            // 入力画像パスが空の場合のみデフォルトの /content/uploaded_input.png をセット
-            if (!initImagePathInput.value.trim()) {
+            // 元画像パス (init_image) の更新: Colab固定ONなら固定パス、OFFなら画像ファイル名を反映
+            if (chkColabFixedPath && chkColabFixedPath.checked) {
               initImagePathInput.value = "/content/uploaded_input.png";
               appState.init_image = "/content/uploaded_input.png";
+            } else {
+              initImagePathInput.value = bgImageName;
+              appState.init_image = bgImageName;
             }
 
             // 画像の縦横比・サイズをキャンバスに同期するか確認
@@ -2410,26 +2398,13 @@
 
       // Default generate load button
       document.getElementById('btnLoadDefault').addEventListener('click', () => {
-        if (confirm('通常の新規生成サンプル（mossimage_demo）を読み込みますか？')) {
+        if (confirm('初期サンプル（mossimage_demo）を復元しますか？')) {
           appState = JSON.parse(JSON.stringify(DEFAULT_TASK_JSON));
           selectedItemIndex = 0;
           renderFormFromState();
-          showToast('新規生成サンプルを読み込みました');
+          showToast('初期サンプルを復元しました');
         }
       });
-
-      // Edit sample load button (User Provided test_girl_angry_diff)
-      const btnLoadEditSample = document.getElementById('btnLoadEditSample');
-      if (btnLoadEditSample) {
-        btnLoadEditSample.addEventListener('click', () => {
-          if (confirm('画像編集（inpaint）の実例サンプル（test_girl_angry_diff）を読み込みますか？')) {
-            appState = JSON.parse(JSON.stringify(EDIT_SAMPLE_TASK_JSON));
-            selectedItemIndex = 0;
-            renderFormFromState();
-            showToast('画像編集サンプル（1344×768 / inpaint）を読み込みました');
-          }
-        });
-      }
 
       // Import JSON
       const jsonFileInput = document.getElementById('jsonFileInput');
@@ -2457,10 +2432,13 @@
     function loadTaskJson(json) {
       if (!json || typeof json !== 'object') return;
       const isEdit = (json.edit_mode !== undefined || json.init_image !== undefined || json.denoising_strength !== undefined || json.task_type === "image_editing");
+      const pathVal = json.init_image || json.input_image || "input.png";
+      const isColab = (pathVal === "/content/uploaded_input.png");
       appState = {
         task_name: json.task_name || "moss_task",
         task_mode: isEdit ? "edit" : "generate",
-        init_image: json.init_image || json.input_image || "/content/uploaded_input.png",
+        init_image: pathVal,
+        colab_fixed: isColab,
         edit_mode: json.edit_mode || "inpaint",
         denoising_strength: json.denoising_strength !== undefined ? json.denoising_strength : (json.strength !== undefined ? json.strength : 0.85),
         mask_feather: json.mask_feather !== undefined ? json.mask_feather : 8,

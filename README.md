@@ -22,7 +22,7 @@ You can try the web application directly in your browser without installing anyt
 
 ### ✨ Key Features
 - **Visual Bounding Box Canvas**: Full support for MOSS-Image coordinate specifications (`bbox_coord_space: "abs_centralized"`, `bbox_format: "yxyx"`). Drag-and-drop to create, move, and resize layout boxes.
-- **Image Editing & Faint Reference Background**: Load a source image via file picker, drag & drop, or clipboard paste (`Ctrl+V`). The image renders faintly in the background with adjustable opacity (0% to 100%) so you can accurately trace and position Bounding Boxes for inpainting or editing. Includes one-click resolution auto-fit, plus dedicated JSON parameter support (`init_image`, `edit_mode: "inpaint"`, `denoising_strength`, `mask_feather`). Use the "🖌️ 編集例ロード" button to instantly load an inpaint sample!
+- **Image Editing & Faint Reference Background**: Load a source image via file picker, drag & drop, or clipboard paste (`Ctrl+V`). The image renders faintly in the background with adjustable opacity (0% to 100%) so you can accurately trace and position Bounding Boxes for inpainting or editing. Includes one-click resolution auto-fit, dedicated JSON parameter support (`init_image`, `edit_mode: "inpaint"`, `denoising_strength`, `mask_feather`), and a handy "Colab fixed path" toggle switch!
 - **Tag Dictionary & CSV Import/Export**: Built-in prompts/tags (quality, character, costume, composition, pose, etc.) with real-time bilingual search. Import your own CSV tags into browser local storage.
 - **Japanese to English Translation**: One-click bilingual translation directly on prompt fields (via free MyMemory API with offline dictionary fallback).
 - **One-Click JSON Export & Import**: Instant clipboard copy, `.json` file download, and full state restoration from existing JSON files.
@@ -54,7 +54,7 @@ You can try the web application directly in your browser without installing anyt
   - 画像ファイルのドラッグ＆ドロップ、ファイル選択、クリップボードからの貼り付け（`Ctrl + V`）にすべて対応。
   - 元画像の人物、服、看板、吹き出しの位置に合わせて正確にバウンディングボックスを重ねて配置できます。
   - 「📐 画像サイズ適用」ボタンで、元画像の解像度（Width×Height）をキャンバス解像度に一発同期。
-  - 画像編集用パラメータ（`init_image`, `edit_mode: "inpaint"`, `denoising_strength`, `mask_feather`）の完全なJSON出力に対応。ヘッダーの「🖌️ 編集例ロード」から実戦サンプル（1344×768 / inpaint）を一発で呼び出せます。
+  - 画像編集用パラメータ（`init_image`, `edit_mode: "inpaint"`, `denoising_strength`, `mask_feather`）の完全なJSON出力に対応。読み込んだ画像ファイル名が自動反映されるほか、「⚡ Colab固定スイッチ」で `/content/uploaded_input.png` への固定切替もワンタッチで行えます。
 - **タグ辞書 & CSV連携**:
   - 品質・人物・構図・衣装・ポーズなどの定番タグ集（日・英）を標準内蔵。
   - タグをクリックするだけでプロンプトにワンタップ挿入。
