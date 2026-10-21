@@ -643,8 +643,11 @@
       </div>
     </div>
     <div class="header-actions">
-      <button class="btn btn-sm" id="btnLoadDefault" title="ユーザー提示の初期設定を読み込みます">
-        🔄 サンプル復元
+      <button class="btn btn-sm" id="btnLoadDefault" title="通常の新規生成サンプルを読み込みます">
+        🎨 生成例ロード
+      </button>
+      <button class="btn btn-sm" id="btnLoadEditSample" title="画像編集（inpaint）の実例サンプルを読み込みます">
+        🖌️ 編集例ロード
       </button>
       <button class="btn btn-sm" id="btnImportJson">
         📂 JSON読込
@@ -690,21 +693,27 @@
         <!-- Image Edit Options (画像編集モード時のみ表示) -->
         <div id="imageEditConfigArea" style="display:none; flex-direction:column; gap:8px; background:rgba(56, 189, 248, 0.05); border:1px solid rgba(56, 189, 248, 0.2); border-radius:6px; padding:10px;">
           <div class="form-group">
-            <label>編集元画像パス (input_image / image_path)</label>
-            <input type="text" id="inputImagePath" placeholder="例: original.png または input/photo.jpg">
+            <label>元画像パス (init_image)</label>
+            <input type="text" id="initImagePath" value="/content/uploaded_input.png" placeholder="例: /content/uploaded_input.png または input.png">
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>編集強度 (denoise / strength)</label>
-              <input type="number" id="editStrength" value="0.75" step="0.05" min="0" max="1">
-            </div>
-            <div class="form-group">
-              <label>マスク処理 (mask_mode)</label>
-              <select id="invertMaskSelect">
-                <option value="inpaint">inpaint (指定領域を描き替え)</option>
-                <option value="keep">keep (指定領域を保護・背景編集)</option>
+              <label>編集モード (edit_mode)</label>
+              <select id="editModeSelect">
+                <option value="inpaint" selected>inpaint (指定領域描き替え)</option>
+                <option value="outpaint">outpaint (枠外拡張)</option>
+                <option value="replace">replace (要素置換)</option>
+                <option value="img2img">img2img (全体調整)</option>
               </select>
             </div>
+            <div class="form-group">
+              <label>編集強度 (denoising_strength)</label>
+              <input type="number" id="denoisingStrengthInput" value="0.85" step="0.05" min="0" max="1">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>マスク境界ぼかし (mask_feather px)</label>
+            <input type="number" id="maskFeatherInput" value="8" min="0" max="64" step="1">
           </div>
         </div>
         
@@ -712,6 +721,7 @@
           <label>解像度プリセット</label>
           <div class="chips-group" id="resPresets">
             <span class="chip active" data-w="1024" data-h="576">1024×576 (16:9)</span>
+            <span class="chip" data-w="1344" data-h="768">1344×768 (16:9)</span>
             <span class="chip" data-w="1024" data-h="1024">1024×1024 (1:1)</span>
             <span class="chip" data-w="576" data-h="1024">576×1024 (9:16)</span>
             <span class="chip" data-w="768" data-h="1024">768×1024 (3:4)</span>
@@ -996,11 +1006,43 @@
       }
     };
 
+    /* Image Editing Real Sample (User Provided Specification) */
+    const EDIT_SAMPLE_TASK_JSON = {
+      task_name: "test_girl_angry_diff",
+      init_image: "/content/uploaded_input.png",
+      edit_mode: "inpaint",
+      denoising_strength: 0.85,
+      mask_feather: 8,
+      width: 1344,
+      height: 768,
+      steps: 35,
+      cfg: 3.0,
+      seed: -1,
+      layout_json: {
+        summary: {
+          meta: ["game screen", "character sprite"],
+          canvas: "single",
+          caption: "anime visual novel style, high quality character expression variation, masterpiece"
+        },
+        items: [
+          {
+            label: "object",
+            caption: "close-up of anime girl's face with an angry expression, furrowed eyebrows, pouting cheeks, slight blush, intensely glaring with upset and annoyed cute look",
+            bbox: [-220, -180, 50, 180],
+            color: "#38bdf8"
+          }
+        ],
+        bbox_coord_space: "abs_centralized",
+        bbox_format: "yxyx"
+      }
+    };
+
     let appState = JSON.parse(JSON.stringify(DEFAULT_TASK_JSON));
     appState.task_mode = "generate"; // "generate" or "edit"
-    appState.input_image = "";
-    appState.strength = 0.75;
-    appState.mask_mode = "inpaint";
+    appState.init_image = "/content/uploaded_input.png";
+    appState.edit_mode = "inpaint";
+    appState.denoising_strength = 0.85;
+    appState.mask_feather = 8;
     
     let selectedItemIndex = 0;
     let lastFocusedInput = null;
@@ -1087,9 +1129,10 @@
     const taskNameInput = document.getElementById('taskName');
     const taskModeRadios = document.querySelectorAll('input[name="taskMode"]');
     const imageEditConfigArea = document.getElementById('imageEditConfigArea');
-    const inputImagePathInput = document.getElementById('inputImagePath');
-    const editStrengthInput = document.getElementById('editStrength');
-    const invertMaskSelect = document.getElementById('invertMaskSelect');
+    const initImagePathInput = document.getElementById('initImagePath');
+    const editModeSelect = document.getElementById('editModeSelect');
+    const denoisingStrengthInput = document.getElementById('denoisingStrengthInput');
+    const maskFeatherInput = document.getElementById('maskFeatherInput');
 
     const imgWidthInput = document.getElementById('imgWidth');
     const imgHeightInput = document.getElementById('imgHeight');
@@ -1162,9 +1205,10 @@
         radio.checked = (radio.value === (isEdit ? 'edit' : 'generate'));
       });
       imageEditConfigArea.style.display = isEdit ? 'flex' : 'none';
-      inputImagePathInput.value = appState.input_image || "";
-      editStrengthInput.value = appState.strength !== undefined ? appState.strength : 0.75;
-      invertMaskSelect.value = appState.mask_mode || "inpaint";
+      initImagePathInput.value = appState.init_image || "/content/uploaded_input.png";
+      editModeSelect.value = appState.edit_mode || "inpaint";
+      denoisingStrengthInput.value = appState.denoising_strength !== undefined ? appState.denoising_strength : 0.85;
+      maskFeatherInput.value = appState.mask_feather !== undefined ? appState.mask_feather : 8;
 
       const summary = appState.layout_json?.summary || {};
       summaryMetaInput.value = (summary.meta || []).join(", ");
@@ -1183,9 +1227,10 @@
       const selectedMode = document.querySelector('input[name="taskMode"]:checked')?.value || 'generate';
       appState.task_mode = selectedMode;
       imageEditConfigArea.style.display = (selectedMode === 'edit') ? 'flex' : 'none';
-      appState.input_image = inputImagePathInput.value.trim();
-      appState.strength = parseFloat(editStrengthInput.value) || 0.75;
-      appState.mask_mode = invertMaskSelect.value;
+      appState.init_image = initImagePathInput.value.trim() || "/content/uploaded_input.png";
+      appState.edit_mode = editModeSelect.value;
+      appState.denoising_strength = parseFloat(denoisingStrengthInput.value) || 0.85;
+      appState.mask_feather = parseInt(maskFeatherInput.value, 10) || 8;
 
       appState.width = parseInt(imgWidthInput.value, 10) || 1024;
       appState.height = parseInt(imgHeightInput.value, 10) || 576;
@@ -1432,21 +1477,22 @@
     function updateJsonPreview() {
       // Build clean JSON representation exactly as requested
       const cleanJson = {
-        task_name: appState.task_name,
-        width: appState.width,
-        height: appState.height,
-        steps: appState.steps,
-        cfg: appState.cfg,
-        seed: appState.seed
+        task_name: appState.task_name
       };
 
-      // Add image editing parameters if edit mode is active
+      // Add image editing parameters in exact order if edit mode is active
       if (appState.task_mode === 'edit') {
-        cleanJson.task_type = "image_editing";
-        cleanJson.input_image = appState.input_image || (bgImageName || "input.png");
-        cleanJson.strength = appState.strength !== undefined ? appState.strength : 0.75;
-        cleanJson.mask_mode = appState.mask_mode || "inpaint";
+        cleanJson.init_image = appState.init_image || (bgImageName ? `/content/${bgImageName}` : "/content/uploaded_input.png");
+        cleanJson.edit_mode = appState.edit_mode || "inpaint";
+        cleanJson.denoising_strength = (appState.denoising_strength !== undefined) ? appState.denoising_strength : 0.85;
+        cleanJson.mask_feather = (appState.mask_feather !== undefined) ? appState.mask_feather : 8;
       }
+
+      cleanJson.width = appState.width;
+      cleanJson.height = appState.height;
+      cleanJson.steps = appState.steps;
+      cleanJson.cfg = appState.cfg;
+      cleanJson.seed = appState.seed;
 
       cleanJson.layout_json = {
         summary: {
@@ -1971,7 +2017,7 @@
        ========================================================================== */
     function bindEvents() {
       // Inputs event delegation
-      [taskNameInput, imgWidthInput, imgHeightInput, stepsInput, cfgInput, seedInput, summaryMetaInput, summaryCanvasInput, summaryCaptionInput, inputImagePathInput, editStrengthInput, invertMaskSelect].forEach(elem => {
+      [taskNameInput, imgWidthInput, imgHeightInput, stepsInput, cfgInput, seedInput, summaryMetaInput, summaryCanvasInput, summaryCaptionInput, initImagePathInput, editModeSelect, denoisingStrengthInput, maskFeatherInput].forEach(elem => {
         if (elem) elem.addEventListener('input', syncStateFromInputs);
       });
 
@@ -1982,6 +2028,13 @@
           updateJsonPreview();
         });
       });
+
+      if (editModeSelect) {
+        editModeSelect.addEventListener('change', () => {
+          syncStateFromInputs();
+          updateJsonPreview();
+        });
+      }
 
       imgWidthInput.addEventListener('change', () => {
         resizeCanvasToFit();
@@ -2099,10 +2152,10 @@
             btnToggleBgVisible.innerHTML = `👁️ 表示中`;
             bgImageVisible = true;
 
-            // 入力画像パスが空ならファイル名をセット
-            if (!inputImagePathInput.value) {
-              inputImagePathInput.value = bgImageName;
-              appState.input_image = bgImageName;
+            // 入力画像パスが未設定ならファイル名をセット
+            if (!initImagePathInput.value || initImagePathInput.value === "/content/uploaded_input.png") {
+              initImagePathInput.value = `/content/${bgImageName}`;
+              appState.init_image = `/content/${bgImageName}`;
             }
 
             // 画像の縦横比・サイズをキャンバスに同期するか確認
@@ -2340,15 +2393,28 @@
         downloadFile(text, filename, 'application/json');
       });
 
-      // Default load button
+      // Default generate load button
       document.getElementById('btnLoadDefault').addEventListener('click', () => {
-        if (confirm('初期サンプル（hiyori_tuning）の設定に復元しますか？')) {
+        if (confirm('通常の新規生成サンプル（mossimage_demo）を読み込みますか？')) {
           appState = JSON.parse(JSON.stringify(DEFAULT_TASK_JSON));
           selectedItemIndex = 0;
           renderFormFromState();
-          showToast('初期設定を復元しました');
+          showToast('新規生成サンプルを読み込みました');
         }
       });
+
+      // Edit sample load button (User Provided test_girl_angry_diff)
+      const btnLoadEditSample = document.getElementById('btnLoadEditSample');
+      if (btnLoadEditSample) {
+        btnLoadEditSample.addEventListener('click', () => {
+          if (confirm('画像編集（inpaint）の実例サンプル（test_girl_angry_diff）を読み込みますか？')) {
+            appState = JSON.parse(JSON.stringify(EDIT_SAMPLE_TASK_JSON));
+            selectedItemIndex = 0;
+            renderFormFromState();
+            showToast('画像編集サンプル（1344×768 / inpaint）を読み込みました');
+          }
+        });
+      }
 
       // Import JSON
       const jsonFileInput = document.getElementById('jsonFileInput');
@@ -2375,16 +2441,17 @@
 
     function loadTaskJson(json) {
       if (!json || typeof json !== 'object') return;
-      const isEdit = (json.task_type === "image_editing" || !!json.input_image);
+      const isEdit = (json.edit_mode !== undefined || json.init_image !== undefined || json.denoising_strength !== undefined || json.task_type === "image_editing");
       appState = {
         task_name: json.task_name || "moss_task",
         task_mode: isEdit ? "edit" : "generate",
-        input_image: json.input_image || "",
-        strength: json.strength !== undefined ? json.strength : 0.75,
-        mask_mode: json.mask_mode || "inpaint",
+        init_image: json.init_image || json.input_image || "/content/uploaded_input.png",
+        edit_mode: json.edit_mode || "inpaint",
+        denoising_strength: json.denoising_strength !== undefined ? json.denoising_strength : (json.strength !== undefined ? json.strength : 0.85),
+        mask_feather: json.mask_feather !== undefined ? json.mask_feather : 8,
         width: json.width || 1024,
         height: json.height || 576,
-        steps: json.steps !== undefined ? json.steps : 30,
+        steps: json.steps !== undefined ? json.steps : 35,
         cfg: json.cfg !== undefined ? json.cfg : 3.0,
         seed: json.seed !== undefined ? json.seed : -1,
         layout_json: json.layout_json || {
