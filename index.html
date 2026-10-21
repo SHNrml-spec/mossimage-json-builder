@@ -423,6 +423,22 @@
       height: 4px;
     }
 
+    .lora-item-row {
+      display: grid;
+      grid-template-columns: 22px 1fr 76px 28px;
+      gap: 6px;
+      align-items: center;
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 6px 8px;
+      transition: border-color 0.15s;
+    }
+
+    .lora-item-row:hover {
+      border-color: var(--accent);
+    }
+
     .canvas-viewport {
       flex: 1;
       display: flex;
@@ -669,9 +685,15 @@
         <div class="card-header">
           <span>⚙️ 基本設定 (Task Settings)</span>
         </div>
-        <div class="form-group">
-          <label>Task Name (タスク識別名)</label>
-          <input type="text" id="taskName" value="mossimage_demo">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Task Name (タスク名)</label>
+            <input type="text" id="taskName" value="mossimage_demo">
+          </div>
+          <div class="form-group">
+            <label>Model (基底モデル)</label>
+            <input type="text" id="modelInput" value="OpenMOSS-Team/MOSS-Image-SFT" placeholder="例: OpenMOSS-Team/MOSS-Image-SFT">
+          </div>
         </div>
 
         <!-- Task Mode Toggle -->
@@ -723,8 +745,8 @@
         <div class="form-group">
           <label>解像度プリセット</label>
           <div class="chips-group" id="resPresets">
-            <span class="chip active" data-w="1024" data-h="576">1024×576 (16:9)</span>
-            <span class="chip" data-w="1344" data-h="768">1344×768 (16:9)</span>
+            <span class="chip active" data-w="1344" data-h="768">1344×768 (16:9 推奨)</span>
+            <span class="chip" data-w="1024" data-h="576">1024×576 (16:9)</span>
             <span class="chip" data-w="1024" data-h="1024">1024×1024 (1:1)</span>
             <span class="chip" data-w="576" data-h="1024">576×1024 (9:16)</span>
             <span class="chip" data-w="768" data-h="1024">768×1024 (3:4)</span>
@@ -735,18 +757,18 @@
         <div class="form-row">
           <div class="form-group">
             <label>Width (幅)</label>
-            <input type="number" id="imgWidth" value="1024" step="16" min="256">
+            <input type="number" id="imgWidth" value="1344" step="16" min="256">
           </div>
           <div class="form-group">
             <label>Height (高さ)</label>
-            <input type="number" id="imgHeight" value="576" step="16" min="256">
+            <input type="number" id="imgHeight" value="768" step="16" min="256">
           </div>
         </div>
 
         <div class="form-row-3">
           <div class="form-group">
             <label>Steps</label>
-            <input type="number" id="stepsVal" value="30" min="1" max="100">
+            <input type="number" id="stepsVal" value="35" min="1" max="100">
           </div>
           <div class="form-group">
             <label>CFG Scale</label>
@@ -758,6 +780,17 @@
               <a href="#" id="btnRandomSeed" style="color:var(--accent); text-decoration:none; font-size:10px;">🎲乱数</a>
             </label>
             <input type="number" id="seedVal" value="-1">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:6px;">
+          <label>
+            <span>Uncond Skip Layers (SLG層スキップ)</span>
+            <span style="font-size:10px; color:var(--accent);" title="CFGの無条件(Negative)パスでスキップする層を指定。MOSS-Imageでは[22]をスキップすることで推論高速化とプロンプト忠実度向上が図られます">[22] 推奨 (カンマ区切り)</span>
+          </label>
+          <div class="input-with-btn">
+            <input type="text" id="uncondSkipLayersInput" value="22" placeholder="例: 22 (空欄で全層評価 / [])">
+            <button class="btn btn-sm" id="btnResetSkipLayers" title="デフォルト [22] に戻す">[22] 既定</button>
           </div>
         </div>
       </div>
@@ -783,6 +816,40 @@
             <button class="btn btn-sm btn-icon" id="btnTranslateSummary" title="日本語を英語に翻訳">🌐 日→英</button>
           </label>
           <textarea id="summaryCaption" placeholder="steps, anime colors, 4k display ...">steps, anime colors,4k display</textarea>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <span>Negative Prompt (ネガティブプロンプト)</span>
+            <button class="btn btn-sm btn-icon" id="btnTranslateNegative" title="日本語を英語に翻訳">🌐 日→英</button>
+          </label>
+          <div class="chips-group" style="margin-bottom:4px;">
+            <span class="chip" id="btnPresetNegQuality" title="品質劣化防止タグを挿入">+ 品質劣化</span>
+            <span class="chip" id="btnPresetNegAnatomy" title="人体崩壊防止タグを挿入">+ 人体崩壊</span>
+            <span class="chip" id="btnPresetNegBbox" title="意図しない枠線やバウンディングボックスの描画を防止">+ BBox線・枠除外</span>
+            <span class="chip" id="btnPresetNegArtifacts" title="不要要素・文字除外タグを挿入">+ ノイズ・文字</span>
+            <span class="chip" id="btnClearNegative" title="ネガティブプロンプトを空にする" style="color:var(--accent-red);">クリア</span>
+          </div>
+          <textarea id="negativePromptInput" rows="2" placeholder="worst quality, low quality, normal quality, blurry, bad anatomy, bad hands, missing fingers, extra limbs, deformed, bounding box lines, wireframe, artifacts ...">worst quality, low quality, normal quality, blurry, bad anatomy, bad hands, missing fingers, extra limbs, deformed, bounding box lines, wireframe, artifacts</textarea>
+        </div>
+      </div>
+
+      <!-- LoRA Settings Card -->
+      <div class="card">
+        <div class="card-header">
+          <span>🎛️ LoRA 設定 (新規・編集共通)</span>
+          <button class="btn btn-sm btn-primary" id="btnAddLoraBtn">+ LoRA追加</button>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--text-muted);">
+          <span>JSON出力形式:</span>
+          <select id="loraFormatSelect" style="width:auto; padding:2px 6px; font-size:11px;">
+            <option value="list">リスト形式: loras: [{"name":..., "scale":...}]</option>
+            <option value="dict">辞書形式: loras: {"name": scale}</option>
+            <option value="single">単一形式: lora_name / lora_scale</option>
+          </select>
+        </div>
+        <div id="loraListContainer" style="display:flex; flex-direction:column; gap:6px; max-height:160px; overflow-y:auto;">
+          <!-- Dynamically populated LoRA rows -->
         </div>
       </div>
 
@@ -937,7 +1004,8 @@
             <textarea id="transOutputEn" rows="4" placeholder="翻訳結果がここに表示されます..."></textarea>
           </div>
           <div style="display:flex; gap:6px; flex-direction:column;">
-            <button class="btn btn-sm" id="btnApplyTransToSummary">全体 Caption に追加</button>
+            <button class="btn btn-sm" id="btnApplyTransToSummary">全体 Caption (ポジティブ) に追加</button>
+            <button class="btn btn-sm" id="btnApplyTransToNegative">Negative Prompt に追加</button>
             <button class="btn btn-sm" id="btnApplyTransToSelectedItem">選択中アイテムの Caption に追加</button>
           </div>
         </div>
@@ -978,30 +1046,27 @@
        ========================================================================== */
     const DEFAULT_TASK_JSON = {
       task_name: "mossimage_demo",
-      width: 1024,
-      height: 576,
-      steps: 30,
+      model: "OpenMOSS-Team/MOSS-Image-SFT",
+      width: 1344,
+      height: 768,
+      steps: 35,
       cfg: 3.0,
+      uncond_skip_layers: [22],
       seed: -1,
+      negative_prompt: "worst quality, low quality, normal quality, blurry, bad anatomy, bad hands, missing fingers, extra limbs, deformed, bounding box lines, wireframe, artifacts",
+      loras: [],
       layout_json: {
         summary: {
           meta: ["Cute", "masterpiece"],
           canvas: "single",
-          caption: "steps, anime colors, 4k display"
+          caption: "Anime style illustration, stone cathedral interior with steps, soft lighting from stained glass windows, serene atmosphere, 4k resolution"
         },
         items: [
           {
             label: "object",
-            caption: "a cute anime nun girl, praying, blue eyes",
-            bbox: [-200, -350, 200, 350],
+            caption: "a cute anime nun girl, praying with hands clasped, blue eyes, habit, detailed dress",
+            bbox: [-260, -220, 320, 220],
             color: "#38bdf8"
-          },
-          {
-            label: "text",
-            caption: "TITLE",
-            text: "MOSSImage",
-            bbox: [160, -250, 260, 250],
-            color: "#f43f5e"
           }
         ],
         bbox_coord_space: "abs_centralized",
@@ -1016,6 +1081,11 @@
     appState.edit_mode = "inpaint";
     appState.denoising_strength = 0.85;
     appState.mask_feather = 8;
+    appState.model = "OpenMOSS-Team/MOSS-Image-SFT";
+    appState.uncond_skip_layers = [22];
+    appState.negative_prompt = "worst quality, low quality, normal quality, blurry, bad anatomy, bad hands, missing fingers, extra limbs, deformed, bounding box lines, wireframe, artifacts";
+    appState.loras = [];
+    appState.lora_format = "list";
     
     let selectedItemIndex = 0;
     let lastFocusedInput = null;
@@ -1100,6 +1170,7 @@
 
     /* DOM Elements */
     const taskNameInput = document.getElementById('taskName');
+    const modelInput = document.getElementById('modelInput');
     const taskModeRadios = document.querySelectorAll('input[name="taskMode"]');
     const imageEditConfigArea = document.getElementById('imageEditConfigArea');
     const initImagePathInput = document.getElementById('initImagePath');
@@ -1113,9 +1184,26 @@
     const stepsInput = document.getElementById('stepsVal');
     const cfgInput = document.getElementById('cfgVal');
     const seedInput = document.getElementById('seedVal');
+    const uncondSkipLayersInput = document.getElementById('uncondSkipLayersInput');
+    const btnResetSkipLayers = document.getElementById('btnResetSkipLayers');
     const summaryMetaInput = document.getElementById('summaryMeta');
     const summaryCanvasInput = document.getElementById('summaryCanvas');
     const summaryCaptionInput = document.getElementById('summaryCaption');
+
+    /* Negative Prompt & LoRA DOM Elements */
+    const negativePromptInput = document.getElementById('negativePromptInput');
+    const btnTranslateNegative = document.getElementById('btnTranslateNegative');
+    const btnPresetNegQuality = document.getElementById('btnPresetNegQuality');
+    const btnPresetNegAnatomy = document.getElementById('btnPresetNegAnatomy');
+    const btnPresetNegBbox = document.getElementById('btnPresetNegBbox');
+    const btnPresetNegArtifacts = document.getElementById('btnPresetNegArtifacts');
+    const btnClearNegative = document.getElementById('btnClearNegative');
+
+    const btnAddLoraBtn = document.getElementById('btnAddLoraBtn');
+    const loraFormatSelect = document.getElementById('loraFormatSelect');
+    const loraListContainer = document.getElementById('loraListContainer');
+    const btnApplyTransToNegative = document.getElementById('btnApplyTransToNegative');
+
     const itemsListContainer = document.getElementById('itemsList');
     const jsonOutputArea = document.getElementById('jsonOutputArea');
     const toastNotice = document.getElementById('toastNotice');
@@ -1165,12 +1253,27 @@
     /* ==========================================================================
        State <-> UI Synchronization
        ========================================================================== */
+    function parseSkipLayers(val) {
+      if (Array.isArray(val)) {
+        return val.map(n => parseInt(n, 10)).filter(n => !isNaN(n));
+      }
+      if (typeof val === 'number') return [val];
+      if (!val || typeof val !== 'string') return [];
+      const cleaned = val.replace(/[\[\]]/g, '').trim();
+      if (!cleaned) return [];
+      return cleaned.split(',')
+        .map(s => parseInt(s.trim(), 10))
+        .filter(n => !isNaN(n));
+    }
+
     function renderFormFromState() {
       taskNameInput.value = appState.task_name;
+      modelInput.value = appState.model || "OpenMOSS-Team/MOSS-Image-SFT";
       imgWidthInput.value = appState.width;
       imgHeightInput.value = appState.height;
       stepsInput.value = appState.steps;
       cfgInput.value = appState.cfg;
+      uncondSkipLayersInput.value = (appState.uncond_skip_layers || []).join(', ');
       seedInput.value = appState.seed;
 
       // Task mode & Edit fields
@@ -1190,6 +1293,10 @@
       summaryCanvasInput.value = summary.canvas || "single";
       summaryCaptionInput.value = summary.caption || "";
 
+      negativePromptInput.value = appState.negative_prompt !== undefined ? appState.negative_prompt : "worst quality, low quality, normal quality, blurry, bad anatomy, bad hands, missing fingers, extra limbs, deformed, bounding box lines, wireframe, artifacts";
+      loraFormatSelect.value = appState.lora_format || "list";
+      renderLoras();
+
       renderItems();
       resizeCanvasToFit();
       drawCanvas();
@@ -1198,6 +1305,7 @@
 
     function syncStateFromInputs() {
       appState.task_name = taskNameInput.value.trim();
+      appState.model = modelInput.value.trim();
 
       const selectedMode = document.querySelector('input[name="taskMode"]:checked')?.value || 'generate';
       appState.task_mode = selectedMode;
@@ -1213,11 +1321,14 @@
       appState.denoising_strength = parseFloat(denoisingStrengthInput.value) || 0.85;
       appState.mask_feather = parseInt(maskFeatherInput.value, 10) || 8;
 
-      appState.width = parseInt(imgWidthInput.value, 10) || 1024;
-      appState.height = parseInt(imgHeightInput.value, 10) || 576;
-      appState.steps = parseInt(stepsInput.value, 10) || 30;
+      appState.width = parseInt(imgWidthInput.value, 10) || 1344;
+      appState.height = parseInt(imgHeightInput.value, 10) || 768;
+      appState.steps = parseInt(stepsInput.value, 10) || 35;
       appState.cfg = parseFloat(cfgInput.value) || 3.0;
+      appState.uncond_skip_layers = parseSkipLayers(uncondSkipLayersInput.value);
       appState.seed = parseInt(seedInput.value, 10) || -1;
+      appState.negative_prompt = negativePromptInput.value;
+      appState.lora_format = loraFormatSelect.value;
 
       if (!appState.layout_json) appState.layout_json = {};
       if (!appState.layout_json.summary) appState.layout_json.summary = {};
@@ -1235,6 +1346,59 @@
 
       updateJsonPreview();
       drawCanvas();
+    }
+
+    function renderLoras() {
+      loraListContainer.innerHTML = '';
+      const loras = appState.loras || [];
+
+      if (loras.length === 0) {
+        loraListContainer.innerHTML = '<div style="color:var(--text-muted); font-size:11px; text-align:center; padding:10px; border:1px dashed var(--border-color); border-radius:6px;">LoRA未登録 (「+ LoRA追加」ボタンで登録)</div>';
+        return;
+      }
+
+      loras.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'lora-item-row';
+        row.innerHTML = `
+          <input type="checkbox" class="lora-check" ${item.enabled !== false ? 'checked' : ''} title="このLoRAを有効にする" style="width:16px; height:16px; cursor:pointer; accent-color:var(--accent);">
+          <input type="text" class="lora-name" value="${escapeHtml(item.name || '')}" placeholder="LoRA名 / パス (例: anime_detail)" style="padding:4px 8px; font-size:12px;">
+          <input type="number" class="lora-scale" value="${item.scale !== undefined ? item.scale : 0.8}" step="0.05" min="-2" max="2" title="強度(Scale)" style="padding:4px 6px; font-size:12px; width:70px;">
+          <button class="btn btn-sm btn-icon btn-danger btn-delete-lora" title="削除" style="padding:2px 6px; height:26px; line-height:1;">🗑️</button>
+        `;
+
+        // Checkbox toggle
+        const chk = row.querySelector('.lora-check');
+        chk.addEventListener('change', () => {
+          item.enabled = chk.checked;
+          updateJsonPreview();
+        });
+
+        // Name change
+        const nameInput = row.querySelector('.lora-name');
+        nameInput.addEventListener('input', () => {
+          item.name = nameInput.value;
+          updateJsonPreview();
+        });
+
+        // Scale change
+        const scaleInput = row.querySelector('.lora-scale');
+        scaleInput.addEventListener('input', () => {
+          const val = parseFloat(scaleInput.value);
+          item.scale = isNaN(val) ? 0.8 : val;
+          updateJsonPreview();
+        });
+
+        // Delete button
+        const delBtn = row.querySelector('.btn-delete-lora');
+        delBtn.addEventListener('click', () => {
+          appState.loras.splice(index, 1);
+          renderLoras();
+          updateJsonPreview();
+        });
+
+        loraListContainer.appendChild(row);
+      });
     }
 
     function renderItems() {
@@ -1461,6 +1625,10 @@
         task_name: appState.task_name
       };
 
+      if (appState.model) {
+        cleanJson.model = appState.model;
+      }
+
       // Add image editing parameters in exact order if edit mode is active
       if (appState.task_mode === 'edit') {
         cleanJson.init_image = appState.init_image || (bgImageName ? `/content/${bgImageName}` : "/content/uploaded_input.png");
@@ -1473,7 +1641,40 @@
       cleanJson.height = appState.height;
       cleanJson.steps = appState.steps;
       cleanJson.cfg = appState.cfg;
+
+      // Uncond Skip Layers (SLG)
+      if (appState.uncond_skip_layers !== undefined) {
+        cleanJson.uncond_skip_layers = appState.uncond_skip_layers;
+      }
+
       cleanJson.seed = appState.seed;
+
+      // Negative Prompt (新規・編集共通)
+      if (appState.negative_prompt !== undefined) {
+        cleanJson.negative_prompt = appState.negative_prompt;
+      }
+
+      // LoRA Settings (新規・編集共通)
+      const format = appState.lora_format || "list";
+      const activeLoras = (appState.loras || []).filter(l => l.enabled !== false && l.name && l.name.trim().length > 0);
+
+      if (format === 'list') {
+        cleanJson.loras = activeLoras.map(l => ({
+          name: l.name.trim(),
+          scale: typeof l.scale === 'number' ? l.scale : (parseFloat(l.scale) || 0.8)
+        }));
+      } else if (format === 'dict') {
+        const dict = {};
+        activeLoras.forEach(l => {
+          dict[l.name.trim()] = typeof l.scale === 'number' ? l.scale : (parseFloat(l.scale) || 0.8);
+        });
+        cleanJson.loras = dict;
+      } else if (format === 'single') {
+        if (activeLoras.length > 0) {
+          cleanJson.lora_name = activeLoras[0].name.trim();
+          cleanJson.lora_scale = typeof activeLoras[0].scale === 'number' ? activeLoras[0].scale : (parseFloat(activeLoras[0].scale) || 0.8);
+        }
+      }
 
       cleanJson.layout_json = {
         summary: {
@@ -1998,9 +2199,106 @@
        ========================================================================== */
     function bindEvents() {
       // Inputs event delegation
-      [taskNameInput, imgWidthInput, imgHeightInput, stepsInput, cfgInput, seedInput, summaryMetaInput, summaryCanvasInput, summaryCaptionInput, initImagePathInput, editModeSelect, denoisingStrengthInput, maskFeatherInput].forEach(elem => {
+      [taskNameInput, modelInput, imgWidthInput, imgHeightInput, stepsInput, cfgInput, uncondSkipLayersInput, seedInput, negativePromptInput, summaryMetaInput, summaryCanvasInput, summaryCaptionInput, initImagePathInput, editModeSelect, denoisingStrengthInput, maskFeatherInput].forEach(elem => {
         if (elem) elem.addEventListener('input', syncStateFromInputs);
       });
+
+      // Reset Skip Layers button
+      if (btnResetSkipLayers) {
+        btnResetSkipLayers.addEventListener('click', (e) => {
+          e.preventDefault();
+          uncondSkipLayersInput.value = "22";
+          syncStateFromInputs();
+          showToast('Skip Layers を推奨値 [22] に設定しました');
+        });
+      }
+
+      // Negative Prompt helper buttons
+      function appendToNegative(presetText) {
+        const cur = negativePromptInput.value.trim();
+        if (!cur) {
+          negativePromptInput.value = presetText;
+        } else {
+          const currentList = cur.split(',').map(s => s.trim().toLowerCase());
+          const newTags = presetText.split(',').map(s => s.trim()).filter(s => s.length > 0 && !currentList.includes(s.toLowerCase()));
+          if (newTags.length > 0) {
+            if (cur.endsWith(',')) {
+              negativePromptInput.value = `${cur} ${newTags.join(', ')}`;
+            } else {
+              negativePromptInput.value = `${cur}, ${newTags.join(', ')}`;
+            }
+          }
+        }
+        syncStateFromInputs();
+        showToast('ネガティブタグを追加しました');
+      }
+
+      if (btnPresetNegQuality) {
+        btnPresetNegQuality.addEventListener('click', () => {
+          appendToNegative('worst quality, low quality, normal quality, blurry');
+        });
+      }
+      if (btnPresetNegAnatomy) {
+        btnPresetNegAnatomy.addEventListener('click', () => {
+          appendToNegative('bad anatomy, bad hands, missing fingers, extra limbs, deformed');
+        });
+      }
+      if (btnPresetNegBbox) {
+        btnPresetNegBbox.addEventListener('click', () => {
+          appendToNegative('bounding box lines, wireframe, artifacts');
+        });
+      }
+      if (btnPresetNegArtifacts) {
+        btnPresetNegArtifacts.addEventListener('click', () => {
+          appendToNegative('text, error, watermark, username, signature, cropped, artifacts');
+        });
+      }
+      if (btnClearNegative) {
+        btnClearNegative.addEventListener('click', () => {
+          negativePromptInput.value = '';
+          syncStateFromInputs();
+          showToast('ネガティブプロンプトを空にしました');
+        });
+      }
+
+      if (btnTranslateNegative) {
+        btnTranslateNegative.addEventListener('click', async () => {
+          const text = negativePromptInput.value;
+          if (!text.trim()) return;
+          btnTranslateNegative.innerHTML = '<span class="spinner"></span>';
+          const translated = await translateText(text);
+          negativePromptInput.value = translated;
+          btnTranslateNegative.innerHTML = '🌐 日→英';
+          syncStateFromInputs();
+          showToast('Negative Prompt を英訳しました');
+        });
+      }
+
+      // LoRA Settings controls
+      if (loraFormatSelect) {
+        loraFormatSelect.addEventListener('change', () => {
+          appState.lora_format = loraFormatSelect.value;
+          updateJsonPreview();
+        });
+      }
+
+      if (btnAddLoraBtn) {
+        btnAddLoraBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (!appState.loras) appState.loras = [];
+          appState.loras.push({
+            name: "",
+            scale: 0.8,
+            enabled: true
+          });
+          renderLoras();
+          updateJsonPreview();
+          const allNameInputs = loraListContainer.querySelectorAll('.lora-name');
+          if (allNameInputs.length > 0) {
+            allNameInputs[allNameInputs.length - 1].focus();
+          }
+        });
+      }
 
       // Task mode radio change
       taskModeRadios.forEach(radio => {
@@ -2351,6 +2649,14 @@
         showToast('全体Captionに追加しました');
       });
 
+      document.getElementById('btnApplyTransToNegative').addEventListener('click', () => {
+        const en = document.getElementById('transOutputEn').value.trim();
+        if (!en) return;
+        insertTagIntoTarget(negativePromptInput, en);
+        syncStateFromInputs();
+        showToast('Negative Prompt に追加しました');
+      });
+
       document.getElementById('btnApplyTransToSelectedItem').addEventListener('click', () => {
         const en = document.getElementById('transOutputEn').value.trim();
         if (!en) return;
@@ -2400,6 +2706,17 @@
       document.getElementById('btnLoadDefault').addEventListener('click', () => {
         if (confirm('初期サンプル（mossimage_demo）を復元しますか？')) {
           appState = JSON.parse(JSON.stringify(DEFAULT_TASK_JSON));
+          appState.task_mode = "generate";
+          appState.init_image = "input.png";
+          appState.colab_fixed = false;
+          appState.edit_mode = "inpaint";
+          appState.denoising_strength = 0.85;
+          appState.mask_feather = 8;
+          appState.model = "OpenMOSS-Team/MOSS-Image-SFT";
+          appState.uncond_skip_layers = [22];
+          appState.negative_prompt = "worst quality, low quality, normal quality, blurry, bad anatomy, bad hands, missing fingers, extra limbs, deformed, bounding box lines, wireframe, artifacts";
+          appState.loras = [];
+          appState.lora_format = "list";
           selectedItemIndex = 0;
           renderFormFromState();
           showToast('初期サンプルを復元しました');
@@ -2434,19 +2751,60 @@
       const isEdit = (json.edit_mode !== undefined || json.init_image !== undefined || json.denoising_strength !== undefined || json.task_type === "image_editing");
       const pathVal = json.init_image || json.input_image || "input.png";
       const isColab = (pathVal === "/content/uploaded_input.png");
+
+      // Parse skip layers
+      let skipLayers = [22];
+      if (json.uncond_skip_layers !== undefined) {
+        skipLayers = parseSkipLayers(json.uncond_skip_layers);
+      }
+
+      // Parse LoRA settings if present in imported JSON
+      let loadedLoras = [];
+      let loadedFormat = "list";
+      if (Array.isArray(json.loras)) {
+        loadedFormat = "list";
+        loadedLoras = json.loras.map(item => {
+          if (typeof item === 'string') return { name: item, scale: 0.8, enabled: true };
+          return {
+            name: item.name || item.lora || item.path || "",
+            scale: item.scale !== undefined ? item.scale : (item.weight !== undefined ? item.weight : 0.8),
+            enabled: true
+          };
+        });
+      } else if (json.loras && typeof json.loras === 'object') {
+        loadedFormat = "dict";
+        loadedLoras = Object.entries(json.loras).map(([k, v]) => ({
+          name: k,
+          scale: typeof v === 'number' ? v : 0.8,
+          enabled: true
+        }));
+      } else if (json.lora_name || json.lora) {
+        loadedFormat = "single";
+        loadedLoras = [{
+          name: json.lora_name || json.lora || "",
+          scale: json.lora_scale !== undefined ? json.lora_scale : (json.lora_weight !== undefined ? json.lora_weight : 0.8),
+          enabled: true
+        }];
+      }
+
       appState = {
         task_name: json.task_name || "moss_task",
+        model: json.model || "OpenMOSS-Team/MOSS-Image-SFT",
         task_mode: isEdit ? "edit" : "generate",
         init_image: pathVal,
         colab_fixed: isColab,
         edit_mode: json.edit_mode || "inpaint",
         denoising_strength: json.denoising_strength !== undefined ? json.denoising_strength : (json.strength !== undefined ? json.strength : 0.85),
         mask_feather: json.mask_feather !== undefined ? json.mask_feather : 8,
-        width: json.width || 1024,
-        height: json.height || 576,
+        width: json.width || 1344,
+        height: json.height || 768,
         steps: json.steps !== undefined ? json.steps : 35,
         cfg: json.cfg !== undefined ? json.cfg : 3.0,
+        uncond_skip_layers: skipLayers,
         seed: json.seed !== undefined ? json.seed : -1,
+        negative_prompt: json.negative_prompt !== undefined ? json.negative_prompt : (json.negative_caption !== undefined ? json.negative_caption : "worst quality, low quality, normal quality, blurry, bad anatomy, bad hands, missing fingers, extra limbs, deformed, bounding box lines, wireframe, artifacts"),
+        loras: loadedLoras,
+        lora_format: loadedFormat,
         layout_json: json.layout_json || {
           summary: { meta: [], canvas: "single", caption: "" },
           items: [],
