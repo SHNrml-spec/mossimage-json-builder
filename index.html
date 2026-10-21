@@ -389,6 +389,40 @@
       font-size: 12px;
     }
 
+    .canvas-image-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #172033;
+      padding: 7px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      font-size: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .bg-controls-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .range-control {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .range-control input[type="range"] {
+      cursor: pointer;
+      accent-color: var(--accent);
+      height: 4px;
+    }
+
     .canvas-viewport {
       flex: 1;
       display: flex;
@@ -639,6 +673,40 @@
           <label>Task Name (タスク識別名)</label>
           <input type="text" id="taskName" value="mossimage_demo">
         </div>
+
+        <!-- Task Mode Toggle -->
+        <div class="form-group">
+          <label>タスク種別 (Task Mode)</label>
+          <div style="display:flex; gap:12px; align-items:center; background:#0f172a; padding:6px 10px; border-radius:6px; border:1px solid var(--border-color);">
+            <label style="cursor:pointer; display:flex; align-items:center; gap:5px; color:var(--text-main); font-size:12px;">
+              <input type="radio" name="taskMode" value="generate" checked> 🎨 新規生成 (Text-to-Image)
+            </label>
+            <label style="cursor:pointer; display:flex; align-items:center; gap:5px; color:var(--text-main); font-size:12px;">
+              <input type="radio" name="taskMode" value="edit"> 🖌️ 画像編集 (Image Editing)
+            </label>
+          </div>
+        </div>
+
+        <!-- Image Edit Options (画像編集モード時のみ表示) -->
+        <div id="imageEditConfigArea" style="display:none; flex-direction:column; gap:8px; background:rgba(56, 189, 248, 0.05); border:1px solid rgba(56, 189, 248, 0.2); border-radius:6px; padding:10px;">
+          <div class="form-group">
+            <label>編集元画像パス (input_image / image_path)</label>
+            <input type="text" id="inputImagePath" placeholder="例: original.png または input/photo.jpg">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>編集強度 (denoise / strength)</label>
+              <input type="number" id="editStrength" value="0.75" step="0.05" min="0" max="1">
+            </div>
+            <div class="form-group">
+              <label>マスク処理 (mask_mode)</label>
+              <select id="invertMaskSelect">
+                <option value="inpaint">inpaint (指定領域を描き替え)</option>
+                <option value="keep">keep (指定領域を保護・背景編集)</option>
+              </select>
+            </div>
+          </div>
+        </div>
         
         <div class="form-group">
           <label>解像度プリセット</label>
@@ -733,6 +801,40 @@
           <button class="btn btn-sm" id="btnResetBoxes" title="すべての矩形枠をリセット">リセット</button>
           <button class="btn btn-sm" id="btnFitCanvas" title="表示倍率をリセット">表示調整</button>
         </div>
+      </div>
+
+      <!-- Reference Image / Edit Background Toolbar -->
+      <div class="canvas-image-toolbar">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <button class="btn btn-sm btn-primary" id="btnUploadBgImage" title="編集対象の元画像や下絵を読み込みます">
+            🖼️ 編集対象・下絵画像を読込
+          </button>
+          <input type="file" id="bgImageFileInput" accept="image/*" style="display:none;">
+
+          <div id="bgImageControls" class="bg-controls-group" style="display:none;">
+            <div class="range-control" title="背景画像の濃さ（透過度）を調整します">
+              <span>不透明度:</span>
+              <input type="range" id="bgOpacityRange" min="5" max="100" value="40" style="width:80px;">
+              <span id="bgOpacityLabel" style="width:32px; font-weight:700; color:var(--accent);">40%</span>
+            </div>
+
+            <button class="btn btn-sm" id="btnFitResolutionToImage" title="元画像の解像度を Width / Height に一発で同期します">
+              📐 画像サイズ適用 (<span id="bgImageDimensions">-</span>)
+            </button>
+
+            <button class="btn btn-sm btn-icon" id="btnToggleBgVisible" title="下絵画像の表示/非表示を切り替えます">
+              👁️ 表示中
+            </button>
+
+            <button class="btn btn-sm btn-icon btn-danger" id="btnClearBgImage" title="下絵画像を解除します">
+              🗑️ 解除
+            </button>
+          </div>
+        </div>
+
+        <span style="font-size:11px; color:var(--text-muted);">
+          💡 画像ドラッグ＆ドロップ、またはクリップボード貼り付け (Ctrl+V) 対応
+        </span>
       </div>
 
       <div class="canvas-viewport" id="canvasViewport">
@@ -895,8 +997,20 @@
     };
 
     let appState = JSON.parse(JSON.stringify(DEFAULT_TASK_JSON));
+    appState.task_mode = "generate"; // "generate" or "edit"
+    appState.input_image = "";
+    appState.strength = 0.75;
+    appState.mask_mode = "inpaint";
+    
     let selectedItemIndex = 0;
     let lastFocusedInput = null;
+
+    /* Background Reference Image State (for Image Editing) */
+    let bgImage = null; // HTMLImageElement
+    let bgImageVisible = true;
+    let bgImageOpacity = 0.40; // Default 40% faint background
+    let bgImageOriginalSize = { w: 0, h: 0 };
+    let bgImageName = "";
 
     /* Preset Tag Dictionary (Embedded Default) */
     const DEFAULT_TAGS = [
@@ -969,10 +1083,14 @@
     /* Colors for Canvas items */
     const ITEM_COLORS = ["#38bdf8", "#f43f5e", "#10b981", "#a855f7", "#f59e0b", "#ec4899", "#06b6d4"];
 
-    /* ==========================================================================
-       DOM Elements
-       ========================================================================== */
+    /* DOM Elements */
     const taskNameInput = document.getElementById('taskName');
+    const taskModeRadios = document.querySelectorAll('input[name="taskMode"]');
+    const imageEditConfigArea = document.getElementById('imageEditConfigArea');
+    const inputImagePathInput = document.getElementById('inputImagePath');
+    const editStrengthInput = document.getElementById('editStrength');
+    const invertMaskSelect = document.getElementById('invertMaskSelect');
+
     const imgWidthInput = document.getElementById('imgWidth');
     const imgHeightInput = document.getElementById('imgHeight');
     const stepsInput = document.getElementById('stepsVal');
@@ -989,6 +1107,17 @@
     const ctx = mossCanvas.getContext('2d');
     const canvasViewport = document.getElementById('canvasViewport');
     const selectedItemStatus = document.getElementById('selectedItemStatus');
+
+    /* Reference Image DOM Elements */
+    const btnUploadBgImage = document.getElementById('btnUploadBgImage');
+    const bgImageFileInput = document.getElementById('bgImageFileInput');
+    const bgImageControls = document.getElementById('bgImageControls');
+    const bgOpacityRange = document.getElementById('bgOpacityRange');
+    const bgOpacityLabel = document.getElementById('bgOpacityLabel');
+    const btnFitResolutionToImage = document.getElementById('btnFitResolutionToImage');
+    const bgImageDimensions = document.getElementById('bgImageDimensions');
+    const btnToggleBgVisible = document.getElementById('btnToggleBgVisible');
+    const btnClearBgImage = document.getElementById('btnClearBgImage');
 
     /* ==========================================================================
        Initialization
@@ -1027,6 +1156,16 @@
       cfgInput.value = appState.cfg;
       seedInput.value = appState.seed;
 
+      // Task mode & Edit fields
+      const isEdit = (appState.task_mode === 'edit');
+      document.querySelectorAll('input[name="taskMode"]').forEach(radio => {
+        radio.checked = (radio.value === (isEdit ? 'edit' : 'generate'));
+      });
+      imageEditConfigArea.style.display = isEdit ? 'flex' : 'none';
+      inputImagePathInput.value = appState.input_image || "";
+      editStrengthInput.value = appState.strength !== undefined ? appState.strength : 0.75;
+      invertMaskSelect.value = appState.mask_mode || "inpaint";
+
       const summary = appState.layout_json?.summary || {};
       summaryMetaInput.value = (summary.meta || []).join(", ");
       summaryCanvasInput.value = summary.canvas || "single";
@@ -1040,6 +1179,14 @@
 
     function syncStateFromInputs() {
       appState.task_name = taskNameInput.value.trim();
+
+      const selectedMode = document.querySelector('input[name="taskMode"]:checked')?.value || 'generate';
+      appState.task_mode = selectedMode;
+      imageEditConfigArea.style.display = (selectedMode === 'edit') ? 'flex' : 'none';
+      appState.input_image = inputImagePathInput.value.trim();
+      appState.strength = parseFloat(editStrengthInput.value) || 0.75;
+      appState.mask_mode = invertMaskSelect.value;
+
       appState.width = parseInt(imgWidthInput.value, 10) || 1024;
       appState.height = parseInt(imgHeightInput.value, 10) || 576;
       appState.steps = parseInt(stepsInput.value, 10) || 30;
@@ -1110,9 +1257,17 @@
             <div class="form-group">
               <label>Label</label>
               <select class="item-label-select">
-                <option value="object" ${item.label === 'object' ? 'selected' : ''}>object</option>
-                <option value="text" ${item.label === 'text' ? 'selected' : ''}>text</option>
-                <option value="background" ${item.label === 'background' ? 'selected' : ''}>background</option>
+                <optgroup label="基本">
+                  <option value="object" ${item.label === 'object' ? 'selected' : ''}>object</option>
+                  <option value="text" ${item.label === 'text' ? 'selected' : ''}>text</option>
+                  <option value="background" ${item.label === 'background' ? 'selected' : ''}>background</option>
+                </optgroup>
+                <optgroup label="画像編集 (Edit / Inpaint)">
+                  <option value="inpaint" ${item.label === 'inpaint' ? 'selected' : ''}>inpaint (描き替え)</option>
+                  <option value="replace" ${item.label === 'replace' ? 'selected' : ''}>replace (置換)</option>
+                  <option value="foreground" ${item.label === 'foreground' ? 'selected' : ''}>foreground (前面)</option>
+                  <option value="character" ${item.label === 'character' ? 'selected' : ''}>character (人物)</option>
+                </optgroup>
               </select>
             </div>
             <div class="form-group">
@@ -1282,29 +1437,38 @@
         height: appState.height,
         steps: appState.steps,
         cfg: appState.cfg,
-        seed: appState.seed,
-        layout_json: {
-          summary: {
-            meta: appState.layout_json.summary.meta,
-            canvas: appState.layout_json.summary.canvas,
-            caption: appState.layout_json.summary.caption
-          },
-          items: appState.layout_json.items.map(it => {
-            const out = {
-              label: it.label,
-              caption: it.caption
-            };
-            if (it.label === 'text' || it.text !== undefined) {
-              out.text = it.text || "";
-            }
-            if (it.bbox && Array.isArray(it.bbox)) {
-              out.bbox = it.bbox;
-            }
-            return out;
-          }),
-          bbox_coord_space: appState.layout_json.bbox_coord_space || "abs_centralized",
-          bbox_format: appState.layout_json.bbox_format || "yxyx"
-        }
+        seed: appState.seed
+      };
+
+      // Add image editing parameters if edit mode is active
+      if (appState.task_mode === 'edit') {
+        cleanJson.task_type = "image_editing";
+        cleanJson.input_image = appState.input_image || (bgImageName || "input.png");
+        cleanJson.strength = appState.strength !== undefined ? appState.strength : 0.75;
+        cleanJson.mask_mode = appState.mask_mode || "inpaint";
+      }
+
+      cleanJson.layout_json = {
+        summary: {
+          meta: appState.layout_json.summary.meta,
+          canvas: appState.layout_json.summary.canvas,
+          caption: appState.layout_json.summary.caption
+        },
+        items: appState.layout_json.items.map(it => {
+          const out = {
+            label: it.label,
+            caption: it.caption
+          };
+          if (it.label === 'text' || it.text !== undefined) {
+            out.text = it.text || "";
+          }
+          if (it.bbox && Array.isArray(it.bbox)) {
+            out.bbox = it.bbox;
+          }
+          return out;
+        }),
+        bbox_coord_space: appState.layout_json.bbox_coord_space || "abs_centralized",
+        bbox_format: appState.layout_json.bbox_format || "yxyx"
       };
 
       const formatted = JSON.stringify(cleanJson, null, 2);
@@ -1390,6 +1554,14 @@
       // Background Canvas fill
       ctx.fillStyle = "#1e293b";
       ctx.fillRect(0, 0, W, H);
+
+      // Draw Background Reference Image (下絵・元画像) if loaded
+      if (bgImage && bgImageVisible) {
+        ctx.save();
+        ctx.globalAlpha = bgImageOpacity;
+        ctx.drawImage(bgImage, 0, 0, W, H);
+        ctx.restore();
+      }
 
       // Draw Grid & Axes
       ctx.lineWidth = 1;
@@ -1799,8 +1971,16 @@
        ========================================================================== */
     function bindEvents() {
       // Inputs event delegation
-      [taskNameInput, imgWidthInput, imgHeightInput, stepsInput, cfgInput, seedInput, summaryMetaInput, summaryCanvasInput, summaryCaptionInput].forEach(elem => {
-        elem.addEventListener('input', syncStateFromInputs);
+      [taskNameInput, imgWidthInput, imgHeightInput, stepsInput, cfgInput, seedInput, summaryMetaInput, summaryCanvasInput, summaryCaptionInput, inputImagePathInput, editStrengthInput, invertMaskSelect].forEach(elem => {
+        if (elem) elem.addEventListener('input', syncStateFromInputs);
+      });
+
+      // Task mode radio change
+      taskModeRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+          syncStateFromInputs();
+          updateJsonPreview();
+        });
       });
 
       imgWidthInput.addEventListener('change', () => {
@@ -1897,6 +2077,141 @@
       document.getElementById('btnFitCanvas').addEventListener('click', () => {
         resizeCanvasToFit();
         drawCanvas();
+      });
+
+      /* ----------------------------------------------------
+         Reference Image & Edit Mode Controls
+         ---------------------------------------------------- */
+      function loadReferenceImageFile(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            bgImage = img;
+            bgImageOriginalSize = { w: img.naturalWidth || img.width, h: img.naturalHeight || img.height };
+            bgImageName = file.name || "reference.png";
+
+            // UIコントロール表示更新
+            bgImageControls.style.display = 'flex';
+            bgImageDimensions.textContent = `${bgImageOriginalSize.w}×${bgImageOriginalSize.h}`;
+            btnUploadBgImage.textContent = `🔄 画像差替`;
+            btnToggleBgVisible.innerHTML = `👁️ 表示中`;
+            bgImageVisible = true;
+
+            // 入力画像パスが空ならファイル名をセット
+            if (!inputImagePathInput.value) {
+              inputImagePathInput.value = bgImageName;
+              appState.input_image = bgImageName;
+            }
+
+            // 画像の縦横比・サイズをキャンバスに同期するか確認
+            const currentW = parseInt(imgWidthInput.value, 10);
+            const currentH = parseInt(imgHeightInput.value, 10);
+            if (currentW !== bgImageOriginalSize.w || currentH !== bgImageOriginalSize.h) {
+              if (confirm(`下絵画像 (${bgImageOriginalSize.w}×${bgImageOriginalSize.h}) を読み込みました！\nキャンバス解像度（Width×Height）を画像のサイズに合わせますか？`)) {
+                imgWidthInput.value = bgImageOriginalSize.w;
+                imgHeightInput.value = bgImageOriginalSize.h;
+                // 自動で画像編集モードに切替
+                document.querySelectorAll('input[name="taskMode"]').forEach(r => {
+                  if (r.value === 'edit') r.checked = true;
+                });
+                syncStateFromInputs();
+                resizeCanvasToFit();
+              }
+            }
+
+            drawCanvas();
+            updateJsonPreview();
+            showToast(`下絵画像をセットしました (${bgImageOriginalSize.w}×${bgImageOriginalSize.h})`);
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // Upload button
+      btnUploadBgImage.addEventListener('click', () => {
+        bgImageFileInput.click();
+      });
+
+      bgImageFileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          loadReferenceImageFile(e.target.files[0]);
+        }
+      });
+
+      // Opacity slider
+      bgOpacityRange.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        bgImageOpacity = val / 100;
+        bgOpacityLabel.textContent = `${val}%`;
+        drawCanvas();
+      });
+
+      // Fit resolution to image button
+      btnFitResolutionToImage.addEventListener('click', () => {
+        if (!bgImageOriginalSize.w || !bgImageOriginalSize.h) return;
+        imgWidthInput.value = bgImageOriginalSize.w;
+        imgHeightInput.value = bgImageOriginalSize.h;
+        syncStateFromInputs();
+        resizeCanvasToFit();
+        drawCanvas();
+        showToast(`解像度を画像サイズ（${bgImageOriginalSize.w}×${bgImageOriginalSize.h}）に同期しました`);
+      });
+
+      // Toggle background visibility
+      btnToggleBgVisible.addEventListener('click', () => {
+        bgImageVisible = !bgImageVisible;
+        btnToggleBgVisible.innerHTML = bgImageVisible ? `👁️ 表示中` : `🙈 非表示`;
+        drawCanvas();
+      });
+
+      // Clear background image
+      btnClearBgImage.addEventListener('click', () => {
+        if (confirm('読み込んだ下絵画像を解除しますか？')) {
+          bgImage = null;
+          bgImageOriginalSize = { w: 0, h: 0 };
+          bgImageName = "";
+          bgImageControls.style.display = 'none';
+          btnUploadBgImage.textContent = `🖼️ 編集対象・下絵画像を読込`;
+          bgImageFileInput.value = '';
+          drawCanvas();
+          showToast('下絵画像を解除しました');
+        }
+      });
+
+      // Drag and drop image onto canvas viewport
+      canvasViewport.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        canvasViewport.style.borderColor = 'var(--accent)';
+      });
+      canvasViewport.addEventListener('dragleave', () => {
+        canvasViewport.style.borderColor = 'var(--border-color)';
+      });
+      canvasViewport.addEventListener('drop', (e) => {
+        e.preventDefault();
+        canvasViewport.style.borderColor = 'var(--border-color)';
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          const file = e.dataTransfer.files[0];
+          if (file.type.startsWith('image/')) {
+            loadReferenceImageFile(file);
+          }
+        }
+      });
+
+      // Paste image from clipboard (Ctrl+V) anywhere on the page
+      window.addEventListener('paste', (e) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1) {
+            e.preventDefault();
+            const file = items[i].getAsFile();
+            loadReferenceImageFile(file);
+            break;
+          }
+        }
       });
 
       // Tabs
@@ -2060,8 +2375,13 @@
 
     function loadTaskJson(json) {
       if (!json || typeof json !== 'object') return;
+      const isEdit = (json.task_type === "image_editing" || !!json.input_image);
       appState = {
         task_name: json.task_name || "moss_task",
+        task_mode: isEdit ? "edit" : "generate",
+        input_image: json.input_image || "",
+        strength: json.strength !== undefined ? json.strength : 0.75,
+        mask_mode: json.mask_mode || "inpaint",
         width: json.width || 1024,
         height: json.height || 576,
         steps: json.steps !== undefined ? json.steps : 30,
